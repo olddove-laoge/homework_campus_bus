@@ -5,19 +5,23 @@
       <view class="section-title">当前站点下一辆车</view>
       <view class="row" style="margin-bottom: 16rpx;">
         <view>
-          <view style="font-size: 30rpx; font-weight: 600;">图书馆站</view>
-          <view class="muted">下一辆：校巴1号 · {{buses[0].eta || '2 分钟'}}</view>
+          <view style="font-size: 30rpx; font-weight: 600;">一号线 / 二号线</view>
+          <view class="muted">下一辆：{{buses[0].name}} · {{buses[0].eta || '2 分钟'}}</view>
         </view>
         <button class="primary-btn" size="mini" bindtap="goEta">查看ETA</button>
+      </view>
+      <view class="muted" style="margin-bottom: 12rpx;">
+        <text style="margin-right: 24rpx; color: #2563eb;">一号线</text>
+        <text style="margin-right: 24rpx; color: #f97316;">二号线</text>
+        <text style="color: #22c55e;">三号线</text>
       </view>
       <map
         class="bus-map"
         latitude="{{center.lat}}"
         longitude="{{center.lng}}"
-        scale="16"
+        scale="14"
         markers="{{markers}}"
         polyline="{{polyline}}"
-        show-location="true"
       ></map>
     </view>
 

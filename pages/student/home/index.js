@@ -4,6 +4,7 @@ let timer = null
 
 Page({
   data: {
+    lines: {},
     buses: [],
     markers: [],
     polyline: [],
@@ -36,9 +37,9 @@ Page({
   startSimulation() {
     if (timer) return
     timer = setInterval(() => {
-      const next = nextState(this.data.buses)
+      const next = nextState(this.data.buses, this.data.lines)
       this.setData(next)
-    }, 1200)
+    }, 800)
   },
 
   stopSimulation() {
