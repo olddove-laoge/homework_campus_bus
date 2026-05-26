@@ -1,0 +1,19 @@
+<navigation-bar title="司机端 · 空调控制" back="{{true}}" color="#111827" background="#f5f7fb"></navigation-bar>
+<view class="scroll-page">
+  <scroll-view class="scroll-area" scroll-y="true" type="list">
+    <view class="card">
+      <view class="section-title">空调状态</view>
+      <view class="row"><text>当前状态</text><text class="badge">已开启</text></view>
+      <view class="list-item row"><text>当前温度</text><text class="muted">24°C</text></view>
+      <view class="list-item row"><text>目标温度</text><text class="muted">23°C</text></view>
+    </view>
+    <view class="card">
+      <view class="section-title">快捷调节</view>
+      <view class="tabs">
+        <view class="tab-item"><view class="tab-title">-1°C</view></view>
+        <view class="tab-item"><view class="tab-title">+1°C</view></view>
+        <view class="tab-item"><view class="tab-title">关闭空调</view></view>
+      </view>
+    </view>
+  </scroll-view>
+</view>

@@ -1,0 +1,22 @@
+<navigation-bar title="学生端 · 乘车中" back="{{true}}" color="#111827" background="#f5f7fb"></navigation-bar>
+<view class="scroll-page">
+  <scroll-view class="scroll-area" scroll-y="true" type="list">
+    <view class="card" style="background: linear-gradient(120deg, #ecfeff, #f0f9ff);">
+      <view class="row">
+        <view>
+          <view style="font-size: 30rpx; font-weight: 600;">校巴1号</view>
+          <view class="muted">当前站点：教学楼A站</view>
+        </view>
+        <text class="badge">车内 24°C</text>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="section-title">后续站点预计到达</view>
+      <view class="list-item row"><text>体育馆站</text><text class="muted">3 分钟</text></view>
+      <view class="list-item row"><text>图书馆站</text><text class="muted">7 分钟</text></view>
+      <view class="list-item row"><text>北门站</text><text class="muted">12 分钟</text></view>
+      <view class="list-item row"><text>宿舍区站</text><text class="muted">16 分钟</text></view>
+    </view>
+  </scroll-view>
+</view>

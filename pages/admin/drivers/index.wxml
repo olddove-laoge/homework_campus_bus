@@ -1,0 +1,11 @@
+<navigation-bar title="管理端 · 司机管理" back="{{true}}" color="#111827" background="#f5f7fb"></navigation-bar>
+<view class="scroll-page">
+  <scroll-view class="scroll-area" scroll-y="true" type="list">
+    <view class="card">
+      <view class="section-title">司机列表</view>
+      <view class="list-item row"><text>张师傅（D001）</text><text class="badge">启用</text></view>
+      <view class="list-item row"><text>李师傅（D002）</text><text class="badge">启用</text></view>
+      <view class="list-item row"><text>王师傅（D003）</text><text class="muted">停用</text></view>
+    </view>
+  </scroll-view>
+</view>

@@ -1,0 +1,13 @@
+<navigation-bar title="管理端 · 路线规划" back="{{true}}" color="#111827" background="#f5f7fb"></navigation-bar>
+<view class="scroll-page">
+  <scroll-view class="scroll-area" scroll-y="true" type="list">
+    <view class="card">
+      <view class="section-title">东环线（示例）</view>
+      <view class="list-item">1. 宿舍区站</view>
+      <view class="list-item">2. 教学楼A站</view>
+      <view class="list-item">3. 体育馆站</view>
+      <view class="list-item">4. 图书馆站</view>
+      <view class="list-item">5. 北门站</view>
+    </view>
+  </scroll-view>
+</view>

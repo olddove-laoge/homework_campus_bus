@@ -1,0 +1,22 @@
+<navigation-bar title="学生端 · 站点 ETA" back="{{true}}" color="#111827" background="#f5f7fb"></navigation-bar>
+<view class="scroll-page">
+  <scroll-view class="scroll-area" scroll-y="true" type="list">
+    <view class="card">
+      <view class="section-title">当前站点</view>
+      <view class="row">
+        <view>
+          <view style="font-size: 30rpx; font-weight: 600;">图书馆站</view>
+          <view class="muted">下一辆：校巴1号</view>
+        </view>
+        <text class="badge">2 分钟</text>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="section-title">未来班次</view>
+      <view class="list-item row"><text>校巴2号</text><text class="muted">5 分钟</text></view>
+      <view class="list-item row"><text>校巴3号</text><text class="muted">8 分钟</text></view>
+      <view class="list-item row"><text>校巴1号（下一圈）</text><text class="muted">15 分钟</text></view>
+    </view>
+  </scroll-view>
+</view>

@@ -1,0 +1,35 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/student/home/index",
+    "pages/student/eta/index",
+    "pages/student/ride/index",
+    "pages/student/seat/index",
+    "pages/driver/dashboard/index",
+    "pages/driver/ac/index",
+    "pages/driver/broadcast/index",
+    "pages/admin/dashboard/index",
+    "pages/admin/drivers/index",
+    "pages/admin/buses/index",
+    "pages/admin/routes/index"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationStyle": "custom"
+  },
+  "style": "v2",
+  "renderer": "skyline",
+  "rendererOptions": {
+    "skyline": {
+      "defaultDisplayBlock": true,
+      "defaultContentBox": true,
+      "tagNameStyleIsolation": "legacy",
+      "disableABTest": true,
+      "sdkVersionBegin": "3.0.0",
+      "sdkVersionEnd": "15.255.255"
+    }
+  },
+  "componentFramework": "glass-easel",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

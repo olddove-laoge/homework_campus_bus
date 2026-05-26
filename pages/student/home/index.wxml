@@ -1,0 +1,47 @@
+<navigation-bar title="学生端 · 车辆总览" back="{{true}}" color="#111827" background="#f5f7fb"></navigation-bar>
+<view class="scroll-page">
+  <scroll-view class="scroll-area" scroll-y="true" type="list">
+    <view class="card" style="background: linear-gradient(130deg, #dbeafe, #eff6ff);">
+      <view class="section-title">当前站点下一辆车</view>
+      <view class="row">
+        <view>
+          <view style="font-size: 30rpx; font-weight: 600;">图书馆站</view>
+          <view class="muted">下一辆：校巴1号 · 2 分钟后到达</view>
+        </view>
+        <button class="primary-btn" size="mini" bindtap="goEta">查看ETA</button>
+      </view>
+    </view>
+
+    <view class="section-title">运行车辆</view>
+    <block wx:for="{{buses}}" wx:key="id">
+      <view class="card">
+        <view class="row" style="margin-bottom: 10rpx;">
+          <view style="font-size: 28rpx; font-weight: 600;">{{item.name}}</view>
+          <text class="badge">{{item.eta}}</text>
+        </view>
+        <view class="muted" style="margin-bottom: 12rpx;">当前位置：{{item.station}} · 温度 {{item.temp}}°C · 座位 {{item.seats}}</view>
+        <view class="row">
+          <view class="progress">
+            <view class="progress-inner" style="width: {{item.load}}%;"></view>
+          </view>
+          <view class="muted">占用 {{item.load}}%</view>
+        </view>
+      </view>
+    </block>
+
+    <view class="tabs">
+      <view class="tab-item" bindtap="goRide">
+        <view class="tab-title">乘车中</view>
+        <view class="muted">当前站点与后续ETA</view>
+      </view>
+      <view class="tab-item" bindtap="goSeat">
+        <view class="tab-title">选座</view>
+        <view class="muted">实时座位占用</view>
+      </view>
+      <view class="tab-item" bindtap="goEta">
+        <view class="tab-title">站点ETA</view>
+        <view class="muted">按站点查车</view>
+      </view>
+    </view>
+  </scroll-view>
+</view>

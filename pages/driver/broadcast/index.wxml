@@ -1,0 +1,17 @@
+<navigation-bar title="司机端 · 到站播报" back="{{true}}" color="#111827" background="#f5f7fb"></navigation-bar>
+<view class="scroll-page">
+  <scroll-view class="scroll-area" scroll-y="true" type="list">
+    <view class="card">
+      <view class="section-title">下一站信息</view>
+      <view class="row"><text>体育馆站</text><text class="muted">预计 3 分钟</text></view>
+    </view>
+    <view class="card">
+      <view class="section-title">播报控制</view>
+      <view class="tabs">
+        <view class="tab-item"><view class="tab-title">即将到站</view><view class="muted">距站点 100m</view></view>
+        <view class="tab-item"><view class="tab-title">到站播报</view><view class="muted">距站点 30m</view></view>
+        <view class="tab-item"><view class="tab-title">手动重播</view><view class="muted">补播</view></view>
+      </view>
+    </view>
+  </scroll-view>
+</view>

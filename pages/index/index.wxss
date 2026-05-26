@@ -1,0 +1,39 @@
+.scroll-area {
+  padding-top: 20rpx;
+}
+
+.login-hero {
+  background: linear-gradient(130deg, #dbeafe, #eff6ff);
+}
+
+.field-label {
+  font-size: 24rpx;
+  color: #374151;
+  margin-bottom: 10rpx;
+}
+
+.input {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12rpx;
+  padding: 18rpx 20rpx;
+  font-size: 26rpx;
+}
+
+.login-btn {
+  width: 100%;
+  margin-top: 28rpx;
+}
+
+.tips {
+  margin-top: 20rpx;
+  background: #f8fafc;
+  border-radius: 12rpx;
+  padding: 16rpx;
+}
+
+.tips-title {
+  font-size: 24rpx;
+  font-weight: 600;
+  margin-bottom: 8rpx;
+}

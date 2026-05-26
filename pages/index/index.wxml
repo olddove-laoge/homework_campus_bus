@@ -1,0 +1,26 @@
+<navigation-bar title="校园智能公交登录" back="{{false}}" color="#111827" background="#f5f7fb"></navigation-bar>
+<view class="scroll-page">
+  <scroll-view class="scroll-area" scroll-y="true" type="list">
+    <view class="card login-hero">
+      <view class="section-title">欢迎使用校园智能公交</view>
+      <view class="muted">请输入账号密码登录对应端口</view>
+    </view>
+
+    <view class="card">
+      <view class="field-label">账号</view>
+      <input class="input" placeholder="请输入账号" value="{{username}}" bindinput="onUsernameInput" />
+
+      <view class="field-label" style="margin-top: 20rpx;">密码</view>
+      <input class="input" password="true" placeholder="请输入密码" value="{{password}}" bindinput="onPasswordInput" />
+
+      <button class="primary-btn login-btn" bindtap="handleLogin">登录</button>
+
+      <view class="tips">
+        <view class="tips-title">演示账号（硬编码）</view>
+        <view class="muted">学生端: student / 123456</view>
+        <view class="muted">司机端: driver / 123456</view>
+        <view class="muted">管理端: admin / 123456</view>
+      </view>
+    </view>
+  </scroll-view>
+</view>
