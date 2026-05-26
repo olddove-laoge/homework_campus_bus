@@ -1,0 +1,20 @@
+<navigation-bar title="乘车方案" back="{{true}}" color="#111827" background="#f5f7fb"></navigation-bar>
+<view class="scroll-page">
+  <scroll-view class="scroll-area" scroll-y="true" type="list">
+    <view class="card" style="background: linear-gradient(130deg, #ecfeff, #f8fafc);">
+      <view class="section-title">推荐方案</view>
+      <view style="font-size: 28rpx; font-weight: 600; margin-bottom: 10rpx;">{{plan.startStation}} → {{plan.endStation}}</view>
+      <view class="muted">乘坐 {{plan.lineName}} · 预计 {{plan.eta}}</view>
+    </view>
+
+    <view class="card">
+      <view class="section-title">路径详情</view>
+      <view class="list-item row"><text>起点</text><text class="muted">{{plan.startStation}}</text></view>
+      <view class="list-item row"><text>换乘</text><text class="badge">{{plan.transfer || '无需换乘'}}</text></view>
+      <view class="list-item row"><text>终点</text><text class="muted">{{plan.endStation}}</text></view>
+      <view class="list-item row" wx:if="{{plan.pathStations && plan.pathStations.length}}"><text>路径</text><text class="muted">{{plan.pathStations.join(' → ')}}</text></view>
+    </view>
+
+    <button class="primary-btn" style="width: 100%;" bindtap="confirmPlan">确认乘车方案</button>
+  </scroll-view>
+</view>

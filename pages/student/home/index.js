@@ -8,17 +8,26 @@ Page({
     buses: [],
     markers: [],
     polyline: [],
-    center: { lat: 28.681771, lng: 115.935563 }
+    center: { lat: 28.681771, lng: 115.935563 },
+    rideStatus: '未乘车'
   },
 
   onLoad() {
     const initial = buildInitialState()
-    this.setData(initial)
+    const rideState = wx.getStorageSync('currentRideState')
+    this.setData({
+      ...initial,
+      rideStatus: rideState && !rideState.finished ? '乘车中' : '未乘车'
+    })
   },
 
   onPullDownRefresh() {
     const initial = buildInitialState()
-    this.setData(initial)
+    const rideState = wx.getStorageSync('currentRideState')
+    this.setData({
+      ...initial,
+      rideStatus: rideState && !rideState.finished ? '乘车中' : '未乘车'
+    })
     wx.stopPullDownRefresh()
   },
 
@@ -48,12 +57,21 @@ Page({
     timer = null
   },
 
+  goRideRequest() {
+    wx.navigateTo({ url: '/pages/student/ride-request/index' })
+  },
+
   goEta() {
     wx.navigateTo({ url: '/pages/student/eta/index' })
   },
 
   goRide() {
-    wx.navigateTo({ url: '/pages/student/ride/index' })
+    const state = wx.getStorageSync('currentRideState')
+    if (state && !state.finished) {
+      wx.navigateTo({ url: '/pages/student/journey/index' })
+      return
+    }
+    wx.navigateTo({ url: '/pages/student/ride-request/index' })
   },
 
   goSeat() {

@@ -8,7 +8,10 @@
           <view style="font-size: 30rpx; font-weight: 600;">一号线 / 二号线</view>
           <view class="muted">下一辆：{{buses[0].name}} · {{buses[0].eta || '2 分钟'}}</view>
         </view>
-        <button class="primary-btn" size="mini" bindtap="goEta">查看ETA</button>
+        <view>
+          <button class="primary-btn" size="mini" bindtap="goRideRequest" style="margin-right: 12rpx;">我要乘车</button>
+          <button class="primary-btn" size="mini" bindtap="goEta">查看ETA</button>
+        </view>
       </view>
       <view class="muted" style="margin-bottom: 12rpx;">
         <text style="margin-right: 24rpx; color: #2563eb;">一号线</text>
@@ -44,8 +47,8 @@
 
     <view class="tabs">
       <view class="tab-item" bindtap="goRide">
-        <view class="tab-title">乘车中</view>
-        <view class="muted">当前站点与后续ETA</view>
+        <view class="tab-title">{{rideStatus}}</view>
+        <view class="muted">{{rideStatus === '未乘车' ? '点这里开始乘车' : '继续查看行程'}} </view>
       </view>
       <view class="tab-item" bindtap="goSeat">
         <view class="tab-title">选座</view>

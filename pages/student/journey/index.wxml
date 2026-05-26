@@ -1,0 +1,55 @@
+<navigation-bar title="行程监控" back="{{true}}" color="#111827" background="#f5f7fb"></navigation-bar>
+<view class="scroll-page journey-page">
+  <scroll-view class="scroll-area" scroll-y="true" type="list">
+    <view class="card">
+      <view class="row" style="margin-bottom: 12rpx;">
+        <view>
+          <view class="section-title" style="margin-bottom: 8rpx;">{{lineName || '多线路换乘'}}</view>
+          <view class="muted">{{startStation}} → {{endStation}}</view>
+        </view>
+        <text class="badge">{{status}}</text>
+      </view>
+      <view class="muted">当前站点：{{timelineStops[activeIndex].name || startStation}}</view>
+      <view wx:if="{{transferStations.length}}" class="muted" style="margin-top: 8rpx;">换乘站：{{transferStations.join(' / ')}}</view>
+    </view>
+
+    <view class="card route-panel">
+      <scroll-view class="route-scroll" scroll-y="true">
+        <view class="route-track" style="height: {{timelineHeight}}rpx;">
+          <view class="bus-indicator" style="top: {{busTop}}rpx;">🚌</view>
+          <block wx:for="{{timelineStops}}" wx:key="index" wx:for-item="stop" wx:for-index="index">
+            <view class="route-stop" style="height: {{ROW_HEIGHT || 104}}rpx;">
+              <view class="route-rail">
+                <view wx:if="{{index > 0}}" class="rail-top" style="background: {{timelineStops[index - 1].connectorColor}};"></view>
+                <view class="stop-dot" style="background: {{stop.color}};"></view>
+                <view wx:if="{{index < timelineStops.length - 1}}" class="rail-bottom" style="background: {{stop.connectorColor}};"></view>
+              </view>
+              <view class="route-content">
+                <view class="route-stop-name">{{stop.name}}</view>
+                <view class="route-stop-meta">
+                  <text wx:if="{{index === activeIndex}}" class="active-tag">当前站</text>
+                  <text wx:elif="{{stop.isStart}}">起点</text>
+                  <text wx:elif="{{stop.isEnd}}">终点</text>
+                  <text wx:elif="{{stop.isTransfer}}" class="transfer-tag">换乘站</text>
+                  <text wx:else>途径站</text>
+                </view>
+              </view>
+            </view>
+          </block>
+        </view>
+      </scroll-view>
+    </view>
+
+    <view class="card">
+      <view class="section-title">行程提示</view>
+      <view class="list-item row"><text>下一站</text><text class="muted">{{timelineStops[activeIndex + 1].name || endStation}}</text></view>
+      <view class="list-item row"><text>提醒</text><text class="muted">到站前将提示下车</text></view>
+      <view class="list-item row"><text>换乘</text><text class="muted">{{transferStations.length ? transferStations.join(' / ') : '无需换乘'}}</text></view>
+    </view>
+
+    <view class="tabs" style="grid-template-columns: repeat(2, 1fr);">
+      <view class="tab-item" bindtap="startRide"><view class="tab-title">推进一站</view><view class="muted">模拟位置变化</view></view>
+      <view class="tab-item" bindtap="backHome"><view class="tab-title">返回首页</view><view class="muted">返回学生端首页</view></view>
+    </view>
+  </scroll-view>
+</view>

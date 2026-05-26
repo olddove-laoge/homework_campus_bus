@@ -1,0 +1,8 @@
+/* ride request */
+.station-picker {
+  max-height: 280rpx;
+}
+
+.selectable {
+  min-height: 96rpx;
+}

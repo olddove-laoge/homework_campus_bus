@@ -1,0 +1,47 @@
+<navigation-bar title="我要乘车" back="{{true}}" color="#111827" background="#f5f7fb"></navigation-bar>
+<view class="scroll-page">
+  <scroll-view class="scroll-area" scroll-y="true" type="list">
+    <view class="card">
+      <view class="section-title">起点选择</view>
+      <view class="muted" style="margin-bottom: 12rpx;">{{gpsText}}</view>
+      <view class="tabs" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 12rpx;">
+        <view class="tab-item" bindtap="useGps">
+          <view class="tab-title">GPS推荐</view>
+          <view class="muted">自动匹配最近站点</view>
+        </view>
+        <view class="tab-item" bindtap="chooseManual">
+          <view class="tab-title">手动选择</view>
+          <view class="muted">点开后可选全部站点</view>
+        </view>
+      </view>
+      <button wx:if="{{!locationGranted}}" class="primary-btn" style="width: 100%; margin-bottom: 12rpx;" bindtap="requestLocation">重新申请定位权限</button>
+      <view class="list-item row"><text>当前起点</text><text class="badge">{{startStation || '未选择'}}</text></view>
+      <view style="margin-top: 14rpx;">
+        <view class="muted" style="margin-bottom: 8rpx;">{{useGps ? '最近站点候选' : '全部站点（可点击选择）'}}</view>
+        <scroll-view class="station-picker" scroll-y="true">
+          <view class="tabs" style="grid-template-columns: repeat(2, 1fr);">
+            <view class="tab-item selectable" wx:for="{{startCandidates}}" wx:key="*this" bindtap="pickStart" data-name="{{item}}">
+              <view class="tab-title">{{item}}</view>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="section-title">终点选择</view>
+      <view class="list-item row"><text>当前终点</text><text class="badge">{{endStation}}</text></view>
+      <view style="margin-top: 14rpx;">
+        <view class="muted" style="margin-bottom: 8rpx;">全部站点（可点击选择）</view>
+        <scroll-view class="station-picker" scroll-y="true">
+          <view class="tabs" style="grid-template-columns: repeat(2, 1fr);">
+            <view class="tab-item selectable" wx:for="{{endCandidates}}" wx:key="*this" bindtap="pickEnd" data-name="{{item}}">
+              <view class="tab-title">{{item}}</view>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+      <button class="primary-btn" style="width: 100%; margin-top: 18rpx;" bindtap="chooseEnd">生成乘车方案</button>
+    </view>
+  </scroll-view>
+</view>

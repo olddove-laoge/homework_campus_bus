@@ -1,0 +1,92 @@
+/* journey */
+.journey-page {
+  position: relative;
+}
+
+.route-panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.route-scroll {
+  height: 640rpx;
+}
+
+.route-track {
+  position: relative;
+  padding: 20rpx 20rpx 20rpx 0;
+  box-sizing: border-box;
+}
+
+.route-stop {
+  display: flex;
+  align-items: stretch;
+  gap: 16rpx;
+}
+
+.route-rail {
+  width: 74rpx;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: none;
+}
+
+.rail-top,
+.rail-bottom {
+  width: 6rpx;
+  flex: 1;
+  min-height: 24rpx;
+}
+
+.stop-dot {
+  width: 22rpx;
+  height: 22rpx;
+  border-radius: 50%;
+  flex: none;
+  box-shadow: 0 0 0 6rpx rgba(59, 130, 246, 0.08);
+  margin: 8rpx 0;
+}
+
+.route-content {
+  flex: 1;
+  padding-top: 2rpx;
+}
+
+.route-stop-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.route-stop-meta {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #64748b;
+}
+
+.active-tag,
+.transfer-tag {
+  display: inline-flex;
+  padding: 6rpx 12rpx;
+  border-radius: 999rpx;
+  font-size: 20rpx;
+}
+
+.active-tag {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.transfer-tag {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.bus-indicator {
+  position: absolute;
+  left: 18rpx;
+  font-size: 40rpx;
+  z-index: 2;
+}

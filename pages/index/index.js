@@ -18,6 +18,10 @@ Page({
     this.setData({ password: e.detail.value.trim() })
   },
 
+  goJourney() {
+    wx.navigateTo({ url: '/pages/student/journey/index' })
+  },
+
   handleLogin() {
     const { username, password } = this.data
     if (!username || !password) {
