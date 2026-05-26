@@ -3,13 +3,22 @@
   <scroll-view class="scroll-area" scroll-y="true" type="list">
     <view class="card" style="background: linear-gradient(130deg, #dbeafe, #eff6ff);">
       <view class="section-title">当前站点下一辆车</view>
-      <view class="row">
+      <view class="row" style="margin-bottom: 16rpx;">
         <view>
           <view style="font-size: 30rpx; font-weight: 600;">图书馆站</view>
-          <view class="muted">下一辆：校巴1号 · 2 分钟后到达</view>
+          <view class="muted">下一辆：校巴1号 · {{buses[0].eta || '2 分钟'}}</view>
         </view>
         <button class="primary-btn" size="mini" bindtap="goEta">查看ETA</button>
       </view>
+      <map
+        class="bus-map"
+        latitude="{{center.lat}}"
+        longitude="{{center.lng}}"
+        scale="16"
+        markers="{{markers}}"
+        polyline="{{polyline}}"
+        show-location="true"
+      ></map>
     </view>
 
     <view class="section-title">运行车辆</view>
