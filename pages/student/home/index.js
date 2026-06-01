@@ -107,6 +107,11 @@ Page({
   },
 
   goSeat() {
+    const state = wx.getStorageSync('currentRideState')
+    if (!state || state.finished || state.status !== 'on_bus') {
+      wx.showToast({ title: '仅乘车中可选座', icon: 'none' })
+      return
+    }
     wx.navigateTo({ url: '/pages/student/seat/index' })
   }
 })

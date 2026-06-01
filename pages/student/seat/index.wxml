@@ -1,8 +1,8 @@
 <navigation-bar title="学生端 · 座位选择" back="{{true}}" color="#111827" background="#f5f7fb"></navigation-bar>
 <view class="scroll-page">
   <scroll-view class="scroll-area" scroll-y="true" type="list">
-    <view class="card">
-      <view class="section-title">校巴1号 座位图</view>
+    <view wx:if="{{allowed}}" class="card">
+      <view class="section-title">{{busName}} 座位图</view>
       <view class="muted" style="margin-bottom: 14rpx;">绿色可选，红色已占，蓝色为我</view>
       <view class="seat-grid">
         <view class="seat free">1A</view><view class="seat occupied">1B</view><view class="seat free">1C</view><view class="seat occupied">1D</view>
