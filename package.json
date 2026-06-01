@@ -1,0 +1,24 @@
+{
+  "name": "finalhomework",
+  "version": "1.0.0",
+  "description": "",
+  "main": ".eslintrc.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/olddove-laoge/homework_campus_bus.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/olddove-laoge/homework_campus_bus/issues"
+  },
+  "homepage": "https://github.com/olddove-laoge/homework_campus_bus#readme",
+  "dependencies": {
+    "@fourdim/wechat-miniapp-qrcode": "^0.1.3"
+  }
+}

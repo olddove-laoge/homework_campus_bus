@@ -4,5 +4,8 @@ Page({
   },
   goBroadcast() {
     wx.navigateTo({ url: '/pages/driver/broadcast/index' })
+  },
+  goScan() {
+    wx.navigateTo({ url: '/pages/driver/scan/index' })
   }
 })

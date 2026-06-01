@@ -1,0 +1,26 @@
+<navigation-bar title="司机端 · 扫码验票" back="{{true}}" color="#111827" background="#f5f7fb"></navigation-bar>
+<view class="scroll-page">
+  <scroll-view class="scroll-area" scroll-y="true" type="list">
+    <view class="card" style="background: linear-gradient(130deg, #d1fae5, #ecfeff);">
+      <view class="section-title">当前车辆</view>
+      <view class="muted">{{driverBus ? driverBus.busName : '未分配车辆'}}</view>
+      <view class="muted" style="margin-top: 8rpx;">{{driverBus ? driverBus.lineName : ''}}</view>
+    </view>
+
+    <view class="card scan-hero">
+      <view class="camera-frame">
+        <view class="camera-corner left-top"></view>
+        <view class="camera-corner right-top"></view>
+        <view class="camera-corner left-bottom"></view>
+        <view class="camera-corner right-bottom"></view>
+      </view>
+      <view class="muted" style="margin-top: 20rpx; text-align: center;">请将学生乘车码置于取景框内</view>
+      <button class="primary-btn" style="width: 100%; margin-top: 24rpx;" bindtap="handleScanCode">开始扫码</button>
+    </view>
+
+    <view class="card">
+      <view class="section-title">验票结果</view>
+      <view class="muted">{{resultText}}</view>
+    </view>
+  </scroll-view>
+</view>

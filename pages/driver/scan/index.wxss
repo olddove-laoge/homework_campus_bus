@@ -1,0 +1,49 @@
+/* driver scan */
+.scan-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.camera-frame {
+  position: relative;
+  width: 440rpx;
+  height: 440rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+}
+
+.camera-corner {
+  position: absolute;
+  width: 56rpx;
+  height: 56rpx;
+  border-color: #22c55e;
+}
+
+.left-top {
+  top: 24rpx;
+  left: 24rpx;
+  border-top: 8rpx solid #22c55e;
+  border-left: 8rpx solid #22c55e;
+}
+
+.right-top {
+  top: 24rpx;
+  right: 24rpx;
+  border-top: 8rpx solid #22c55e;
+  border-right: 8rpx solid #22c55e;
+}
+
+.left-bottom {
+  bottom: 24rpx;
+  left: 24rpx;
+  border-bottom: 8rpx solid #22c55e;
+  border-left: 8rpx solid #22c55e;
+}
+
+.right-bottom {
+  bottom: 24rpx;
+  right: 24rpx;
+  border-bottom: 8rpx solid #22c55e;
+  border-right: 8rpx solid #22c55e;
+}

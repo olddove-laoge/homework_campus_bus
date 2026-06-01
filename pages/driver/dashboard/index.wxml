@@ -18,9 +18,10 @@
       <view class="list-item row"><text>位置上报</text><text class="badge">开启中</text></view>
     </view>
 
-    <view class="tabs">
+    <view class="tabs" style="grid-template-columns: repeat(2, 1fr);">
       <view class="tab-item" bindtap="goAc"><view class="tab-title">空调控制</view><view class="muted">温度调节</view></view>
       <view class="tab-item" bindtap="goBroadcast"><view class="tab-title">到站播报</view><view class="muted">手动播报</view></view>
+      <view class="tab-item" bindtap="goScan"><view class="tab-title">扫描乘车码</view><view class="muted">绑定学生行程</view></view>
       <view class="tab-item"><view class="tab-title">位置上报</view><view class="muted">轨迹模拟中</view></view>
     </view>
   </scroll-view>

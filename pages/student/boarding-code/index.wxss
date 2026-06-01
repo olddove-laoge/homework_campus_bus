@@ -1,0 +1,32 @@
+/* boarding code */
+.qrcode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.qrcode-canvas {
+  width: 480rpx;
+  height: 480rpx;
+  background: #ffffff;
+  border-radius: 20rpx;
+}
+
+.qr-error {
+  margin-top: 20rpx;
+  color: #b91c1c;
+  font-size: 24rpx;
+  text-align: center;
+}
+
+.code-token {
+  margin-top: 20rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 14rpx;
+  background: #0f172a;
+  color: #f8fafc;
+  font-size: 22rpx;
+  line-height: 1.6;
+  text-align: center;
+  word-break: break-all;
+}

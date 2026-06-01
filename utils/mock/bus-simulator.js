@@ -1,3 +1,5 @@
+const LIVE_STATE_KEY = 'liveBusSimulationState'
+
 const lines = {
   line1: {
     name: '一号线',
@@ -424,9 +426,53 @@ function buildMarkersForState(busesState, linesState, showStationLabel = false) 
   return buildMarkers({ line1, line2, line3, line4 }, busesState, showStationLabel)
 }
 
+function getLiveSimulationState(showStationLabel = false) {
+  const stored = wx.getStorageSync(LIVE_STATE_KEY)
+  if (stored && stored.lines && stored.buses) {
+    return {
+      ...stored,
+      markers: buildMarkersForState(stored.buses, stored.lines, showStationLabel)
+    }
+  }
+
+  const initial = buildInitialState(showStationLabel)
+  wx.setStorageSync(LIVE_STATE_KEY, {
+    lines: initial.lines,
+    buses: initial.buses,
+    polyline: initial.polyline,
+    center: initial.center
+  })
+  return initial
+}
+
+function tickLiveSimulation(showStationLabel = false) {
+  const current = getLiveSimulationState(showStationLabel)
+  const next = nextState(current.buses, current.lines, showStationLabel)
+  const liveState = {
+    lines: current.lines,
+    buses: next.buses,
+    polyline: current.polyline,
+    center: current.center
+  }
+  wx.setStorageSync(LIVE_STATE_KEY, liveState)
+  return {
+    ...liveState,
+    markers: buildMarkersForState(liveState.buses, liveState.lines, showStationLabel)
+  }
+}
+
+function findBusById(busId) {
+  if (!busId) return null
+  const current = getLiveSimulationState(false)
+  return (current.buses || []).find(bus => bus.id === busId) || null
+}
+
 module.exports = {
   lines,
   buildInitialState,
   nextState,
-  buildMarkersForState
+  buildMarkersForState,
+  getLiveSimulationState,
+  tickLiveSimulation,
+  findBusById
 }

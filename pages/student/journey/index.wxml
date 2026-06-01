@@ -10,7 +10,29 @@
         <text class="badge">{{status}}</text>
       </view>
       <view class="muted">当前站点：{{timelineStops[activeIndex].name || startStation}}</view>
+      <view class="muted" style="margin-top: 8rpx;">当前乘车段：第{{currentSegmentIndex + 1}}段 · {{currentSegmentName}}</view>
+      <view class="muted" style="margin-top: 8rpx;">本段路线：{{currentSegmentStart}} → {{currentSegmentEnd}}</view>
+      <view wx:if="{{currentBusName}}" class="muted" style="margin-top: 8rpx;">已绑定车辆：{{currentBusName}}</view>
+      <view wx:if="{{currentBusStation}}" class="muted" style="margin-top: 8rpx;">车辆当前站点：{{currentBusStation}}</view>
       <view wx:if="{{transferStations.length}}" class="muted" style="margin-top: 8rpx;">换乘站：{{transferStations.join(' / ')}}</view>
+    </view>
+
+    <view class="card" wx:if="{{rideStatusKey === 'pending_boarding'}}">
+      <view class="section-title">待上车</view>
+      <view class="muted">请先打开乘车码给司机扫码，成功后本段行程会绑定到具体校巴。</view>
+      <button class="primary-btn" style="width: 100%; margin-top: 18rpx;" bindtap="showBoardingCode">打开乘车码</button>
+    </view>
+
+    <view class="card" wx:if="{{rideStatusKey === 'on_bus'}}">
+      <view class="section-title">乘车中</view>
+      <view class="list-item row"><text>当前车辆</text><text class="muted">{{currentBusName}}</text></view>
+      <view class="list-item row"><text>下一站</text><text class="muted">{{timelineStops[activeIndex + 1].name || currentSegmentEnd}}</text></view>
+      <view class="list-item row"><text>到站动作</text><text class="muted">到达本段终点后自动下车</text></view>
+    </view>
+
+    <view class="card" wx:if="{{rideStatusKey === 'finished'}}">
+      <view class="section-title">行程完成</view>
+      <view class="muted">你已到达终点站，本次乘车流程结束。</view>
     </view>
 
     <view class="card route-panel">
@@ -40,16 +62,11 @@
       </scroll-view>
     </view>
 
-    <view class="card">
-      <view class="section-title">行程提示</view>
-      <view class="list-item row"><text>下一站</text><text class="muted">{{timelineStops[activeIndex + 1].name || endStation}}</text></view>
-      <view class="list-item row"><text>提醒</text><text class="muted">到站前将提示下车</text></view>
-      <view class="list-item row"><text>换乘</text><text class="muted">{{transferStations.length ? transferStations.join(' / ') : '无需换乘'}}</text></view>
-    </view>
-
     <view class="tabs" style="grid-template-columns: repeat(2, 1fr);">
-      <view class="tab-item" bindtap="startRide"><view class="tab-title">推进一站</view><view class="muted">模拟位置变化</view></view>
+      <view class="tab-item" bindtap="startRide"><view class="tab-title">推进一站</view><view class="muted">模拟车辆到站</view></view>
       <view class="tab-item" bindtap="backHome"><view class="tab-title">返回首页</view><view class="muted">返回学生端首页</view></view>
     </view>
+
+    <button wx:if="{{finished}}" class="primary-btn" style="width: 100%; margin-top: 18rpx;" bindtap="endRide">结束并返回首页</button>
   </scroll-view>
 </view>

@@ -1,4 +1,4 @@
-const { buildInitialState, nextState, buildMarkersForState } = require('../../../utils/mock/bus-simulator')
+const { getLiveSimulationState, tickLiveSimulation, buildMarkersForState } = require('../../../utils/mock/bus-simulator')
 
 const STATION_LABEL_SCALE = 16
 let timer = null
@@ -36,19 +36,32 @@ Page({
   },
 
   resetViewState() {
-    const initial = buildInitialState(this.data.showStationLabel)
+    const initial = getLiveSimulationState(this.data.showStationLabel)
     const rideState = wx.getStorageSync('currentRideState')
+    const rideStatus = !rideState || rideState.finished
+      ? '未乘车'
+      : rideState.status === 'pending_boarding'
+        ? '待上车'
+        : '乘车中'
+
     this.setData({
-      ...initial,
-      rideStatus: rideState && !rideState.finished ? '乘车中' : '未乘车'
+      lines: initial.lines,
+      buses: initial.buses,
+      markers: initial.markers,
+      polyline: initial.polyline,
+      center: initial.center,
+      rideStatus
     })
   },
 
   startSimulation() {
     if (timer) return
     timer = setInterval(() => {
-      const next = nextState(this.data.buses, this.data.lines, this.data.showStationLabel)
-      this.setData(next)
+      const next = tickLiveSimulation(this.data.showStationLabel)
+      this.setData({
+        buses: next.buses,
+        markers: next.markers
+      })
     }, 100)
   },
 

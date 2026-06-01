@@ -1,7 +1,17 @@
 const { findShortestPath } = require('../../../utils/mock/route-planner')
-const { lines } = require('../../../utils/mock/bus-simulator')
+const { lines, findBusById, tickLiveSimulation } = require('../../../utils/mock/bus-simulator')
+const {
+  getRideState,
+  saveRideState,
+  clearRideState,
+  issueBoardingCode,
+  completeCurrentSegment,
+  updateRideProgress,
+  getCurrentSegment
+} = require('../../../utils/mock/ride-session-store')
 
 const ROW_HEIGHT = 104
+let timer = null
 
 function colorForLineName(lineName) {
   const line = Object.values(lines).find(item => item.name === lineName)
@@ -35,6 +45,7 @@ function buildTimelineStops(plan) {
         prev.color = stopColor
         prev.connectorColor = stopColor
         prev.segmentName = segment.lineName || prev.segmentName
+        prev.segmentIndex = segmentIndex
         return
       }
 
@@ -43,6 +54,7 @@ function buildTimelineStops(plan) {
         color: stopColor,
         connectorColor: stopColor,
         segmentName: segment.lineName || '',
+        segmentIndex,
         isStart: isFirst,
         isEnd: false,
         isTransfer,
@@ -55,9 +67,6 @@ function buildTimelineStops(plan) {
     const next = stops[index + 1]
     if (next) {
       stop.connectorColor = next.color
-      if (!stop.isTransfer && !stop.isStart) {
-        stop.meta = stop.meta || '途径站'
-      }
     } else {
       stop.isEnd = true
       stop.meta = '终点'
@@ -72,9 +81,73 @@ function buildTimelineStops(plan) {
   return stops
 }
 
+function getStatusLabel(status, finished) {
+  if (finished || status === 'finished') return '行程已结束'
+  if (status === 'on_bus') return '乘车中'
+  if (status === 'pending_boarding') return '暂未上车'
+  return '待乘车'
+}
+
+function getCurrentSegmentEndIndex(timelineStops, segmentIndex) {
+  let endIndex = 0
+  timelineStops.forEach((stop, index) => {
+    if (stop.segmentIndex === segmentIndex) {
+      endIndex = index
+    }
+  })
+  return endIndex
+}
+
+function buildViewModel(rideState) {
+  const storedPlan = rideState?.plan || {}
+  let effectivePlan = storedPlan
+  let segments = Array.isArray(storedPlan.segments) ? addSegmentColors(storedPlan.segments) : []
+  let stations = Array.isArray(storedPlan.pathStations) ? storedPlan.pathStations : []
+  let transferStations = Array.isArray(storedPlan.transferStations) ? storedPlan.transferStations : []
+
+  if ((!segments.length || !stations.length) && storedPlan.startStation && storedPlan.endStation) {
+    const result = findShortestPath(storedPlan.startStation, storedPlan.endStation)
+    if (result.success) {
+      segments = addSegmentColors(result.segments)
+      stations = result.pathStations
+      transferStations = result.transferStations
+      effectivePlan = {
+        ...storedPlan,
+        lineName: result.lineName,
+        eta: result.eta,
+        pathStations: stations,
+        segments,
+        transferStations
+      }
+    }
+  }
+
+  const timelineStops = buildTimelineStops({
+    ...effectivePlan,
+    segments,
+    pathStations: stations
+  })
+
+  const activeIndex = Math.min(rideState?.currentIndex || 0, Math.max(timelineStops.length - 1, 0))
+  const currentSegment = getCurrentSegment({ ...rideState, plan: effectivePlan }) || segments[rideState?.currentSegmentIndex || 0] || null
+  const currentSegmentEndIndex = currentSegment ? getCurrentSegmentEndIndex(timelineStops, rideState?.currentSegmentIndex || 0) : activeIndex
+
+  return {
+    effectivePlan,
+    segments,
+    stations,
+    transferStations,
+    timelineStops,
+    activeIndex,
+    currentSegment,
+    currentSegmentEndIndex
+  }
+}
+
 Page({
   data: {
-    status: '待乘车',
+    status: '暂未上车',
+    rideStatusKey: 'pending_boarding',
     lineName: '',
     startStation: '',
     endStation: '',
@@ -85,118 +158,185 @@ Page({
     busTop: 0,
     timelineHeight: 0,
     finished: false,
-    transferStations: []
+    transferStations: [],
+    currentSegmentIndex: 0,
+    currentSegmentName: '',
+    currentSegmentStart: '',
+    currentSegmentEnd: '',
+    currentBusName: '',
+    currentSegmentEndIndex: 0,
+    currentBusStation: ''
   },
 
   onLoad() {
-    const stored = wx.getStorageSync('currentRideState')
-    const plan = stored?.plan || wx.getStorageSync('currentRidePlan')
+    this.restoreRideState()
+  },
 
-    if (!plan?.startStation || !plan?.endStation) {
+  onShow() {
+    this.restoreRideState()
+    this.startBusBinding()
+  },
+
+  onHide() {
+    this.stopBusBinding()
+  },
+
+  onUnload() {
+    this.stopBusBinding()
+  },
+
+  restoreRideState() {
+    const rideState = getRideState()
+    if (!rideState?.plan?.startStation || !rideState?.plan?.endStation) {
       wx.showToast({ title: '请先生成乘车方案', icon: 'none' })
       wx.navigateBack({ delta: 1 })
       return
     }
 
-    let effectivePlan = plan
-    let segments = Array.isArray(plan.segments) ? addSegmentColors(plan.segments) : []
-    let stations = Array.isArray(plan.pathStations) ? plan.pathStations : []
-    let transferStations = Array.isArray(plan.transferStations) ? plan.transferStations : []
+    const {
+      effectivePlan,
+      segments,
+      stations,
+      transferStations,
+      timelineStops,
+      activeIndex,
+      currentSegment,
+      currentSegmentEndIndex
+    } = buildViewModel(rideState)
 
-    if (!segments.length || !stations.length) {
-      const result = findShortestPath(plan.startStation, plan.endStation)
-      if (!result.success) {
-        wx.showToast({ title: '未找到可达路径', icon: 'none' })
-        wx.navigateBack({ delta: 1 })
-        return
-      }
-      segments = addSegmentColors(result.segments)
-      stations = result.pathStations
-      transferStations = result.transferStations
-      effectivePlan = {
-        ...plan,
-        lineName: result.lineName,
-        eta: result.eta,
+    const nextState = {
+      ...rideState,
+      plan: {
+        ...effectivePlan,
         pathStations: stations,
         segments,
         transferStations
       }
     }
+    saveRideState(nextState)
 
-    const timelineStops = buildTimelineStops({
-      ...effectivePlan,
-      segments,
-      pathStations: stations
-    })
-    const currentIndex = Math.min(stored?.currentIndex || 0, Math.max(timelineStops.length - 1, 0))
+    const currentBus = nextState.currentBusId ? findBusById(nextState.currentBusId) : null
 
     this.setData({
       lineName: effectivePlan.lineName || '多线路换乘',
       startStation: effectivePlan.startStation,
       endStation: effectivePlan.endStation,
-      status: stored?.status || '乘车中',
+      status: getStatusLabel(nextState.status, nextState.finished),
+      rideStatusKey: nextState.status,
       stations,
       timelineStops,
       segments,
       transferStations,
-      activeIndex: currentIndex,
-      busTop: currentIndex * ROW_HEIGHT + 8,
+      activeIndex,
+      busTop: activeIndex * ROW_HEIGHT + 8,
       timelineHeight: Math.max(timelineStops.length * ROW_HEIGHT + 32, 420),
-      finished: Boolean(stored?.finished)
+      finished: Boolean(nextState.finished),
+      currentSegmentIndex: nextState.currentSegmentIndex || 0,
+      currentSegmentName: currentSegment?.lineName || '',
+      currentSegmentStart: currentSegment?.stations?.[0] || effectivePlan.startStation,
+      currentSegmentEnd: currentSegment?.stations?.[currentSegment.stations.length - 1] || effectivePlan.endStation,
+      currentBusName: nextState.currentBusName || '',
+      currentSegmentEndIndex,
+      currentBusStation: currentBus?.station || ''
     })
-
-    wx.setStorageSync('currentRidePlan', {
-      ...effectivePlan,
-      pathStations: stations,
-      segments,
-      transferStations
-    })
-    this.saveState()
   },
 
-  onHide() {
-    this.saveState()
+  startBusBinding() {
+    if (timer) return
+    timer = setInterval(() => {
+      const rideState = getRideState()
+      if (!rideState || rideState.finished || rideState.status !== 'on_bus' || !rideState.currentBusId) return
+
+      tickLiveSimulation(false)
+      const currentBus = findBusById(rideState.currentBusId)
+      if (!currentBus) return
+
+      this.setData({ currentBusStation: currentBus.station || '' })
+      this.syncProgressWithBus(currentBus.station)
+    }, 100)
   },
 
-  onUnload() {
-    this.saveState()
+  stopBusBinding() {
+    if (!timer) return
+    clearInterval(timer)
+    timer = null
+  },
+
+  syncProgressWithBus(busStation) {
+    if (!busStation) return
+    const timelineStops = this.data.timelineStops || []
+    const currentIndex = this.data.activeIndex || 0
+    const segmentEndIndex = this.data.currentSegmentEndIndex || currentIndex
+
+    let matchedIndex = -1
+    for (let i = currentIndex; i <= segmentEndIndex; i += 1) {
+      if (timelineStops[i] && timelineStops[i].name === busStation) {
+        matchedIndex = i
+      }
+    }
+
+    if (matchedIndex === -1 || matchedIndex === currentIndex) return
+
+    updateRideProgress(matchedIndex)
+    this.restoreRideState()
+
+    if (matchedIndex < segmentEndIndex) return
+
+    const result = completeCurrentSegment(busStation)
+    if (!result || !result.success) return
+
+    if (result.finished) {
+      this.restoreRideState()
+      return
+    }
+
+    wx.showToast({ title: '已到换乘站，请重新扫码上车', icon: 'none' })
+    this.restoreRideState()
+  },
+
+  showBoardingCode() {
+    const result = issueBoardingCode()
+    if (!result.success) {
+      wx.showToast({ title: result.message, icon: 'none' })
+      return
+    }
+    wx.navigateTo({ url: '/pages/student/boarding-code/index' })
   },
 
   startRide() {
-    if (this.data.finished) return
-    const nextIndex = Math.min(this.data.activeIndex + 1, Math.max(this.data.timelineStops.length - 1, 0))
-    const finished = nextIndex >= this.data.timelineStops.length - 1
-    this.setData({
-      status: '乘车中',
-      activeIndex: nextIndex,
-      busTop: nextIndex * ROW_HEIGHT + 8,
-      finished
-    })
-    this.saveState()
-    if (finished) {
-      wx.removeStorageSync('currentRideState')
-      wx.removeStorageSync('currentRidePlan')
+    const rideState = getRideState()
+    if (!rideState || rideState.finished) return
+    if (rideState.status !== 'on_bus') {
+      wx.showToast({ title: '请先出示乘车码完成上车', icon: 'none' })
+      return
     }
+
+    const nextIndex = Math.min(this.data.activeIndex + 1, this.data.currentSegmentEndIndex)
+    const updated = updateRideProgress(nextIndex)
+    this.restoreRideState()
+
+    if (nextIndex < this.data.currentSegmentEndIndex) return
+
+    const arrivalStation = this.data.timelineStops[nextIndex]?.name || this.data.currentSegmentEnd
+    const result = completeCurrentSegment(arrivalStation)
+    if (!result || !result.success) return
+
+    if (result.finished) {
+      this.restoreRideState()
+      return
+    }
+
+    wx.showToast({ title: '已到换乘站，请重新扫码上车', icon: 'none' })
+    this.restoreRideState()
+  },
+
+  endRide() {
+    clearRideState()
+    wx.removeStorageSync('currentRidePlan')
+    wx.reLaunch({ url: '/pages/student/home/index' })
   },
 
   backHome() {
     wx.reLaunch({ url: '/pages/student/home/index' })
-  },
-
-  saveState() {
-    if (this.data.finished) return
-    wx.setStorageSync('currentRideState', {
-      status: this.data.status,
-      currentIndex: this.data.activeIndex,
-      finished: this.data.finished,
-      plan: {
-        lineName: this.data.lineName,
-        startStation: this.data.startStation,
-        endStation: this.data.endStation,
-        pathStations: this.data.stations,
-        segments: this.data.segments,
-        transferStations: this.data.transferStations
-      }
-    })
   }
 })
