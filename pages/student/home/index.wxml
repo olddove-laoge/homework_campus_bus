@@ -19,12 +19,14 @@
         <text style="color: #22c55e;">三号线</text>
       </view>
       <map
+        id="student-bus-map"
         class="bus-map"
         latitude="{{center.lat}}"
         longitude="{{center.lng}}"
         scale="14"
         markers="{{markers}}"
         polyline="{{polyline}}"
+        bindregionchange="onMapRegionChange"
       ></map>
     </view>
 

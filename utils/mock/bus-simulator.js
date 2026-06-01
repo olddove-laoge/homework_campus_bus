@@ -127,12 +127,15 @@ const lines = {
 }
 
 const buses = [
-  { id: 'S1', name: '校巴1号', lineId: 'line1', seats: '26/40', load: 65, temp: 24, offset: 0, step: 2 },
-  { id: 'S2', name: '校巴2号', lineId: 'line2', seats: '14/40', load: 35, temp: 23, offset: 72, step: 2 },
-  { id: 'S3', name: '校巴3号', lineId: 'line4', seats: '31/40', load: 78, temp: 25, offset: 132, step: 3 }
+  { id: 'S1', name: '校巴1号', lineId: 'line1', seats: '26/40', load: 65, temp: 24, offset: 0, speed: 0.12 },
+  { id: 'S2', name: '校巴2号', lineId: 'line2', seats: '14/40', load: 35, temp: 23, offset: 72, speed: 0.1 },
+  { id: 'S3', name: '校巴3号', lineId: 'line4', seats: '31/40', load: 78, temp: 25, offset: 132, speed: 0.14 }
 ]
 
 const segmentCount = 12
+const tickMs = 100
+const dwellMs = 10 * 1000
+const dwellTicks = Math.round(dwellMs / tickMs)
 
 function buildRouteNodes(line) {
   return [
@@ -158,64 +161,146 @@ function interpolateRoute(nodes, count) {
   return route
 }
 
+function normalizePointIndex(pointIndex, totalPoints) {
+  const normalized = pointIndex % totalPoints
+  return normalized < 0 ? normalized + totalPoints : normalized
+}
+
 function getNodeIndex(pointIndex) {
   return Math.floor(pointIndex / segmentCount)
 }
 
+function isAtNodeAnchor(pointIndex) {
+  return Math.abs(pointIndex % segmentCount) < 0.0001
+}
+
+function getReachedStationNodeIndex(prevIndex, nextIndex, routeNodes, totalPoints) {
+  const normalizedPrev = normalizePointIndex(prevIndex, totalPoints)
+  const normalizedNext = normalizePointIndex(nextIndex, totalPoints)
+  const wrapped = normalizedNext < normalizedPrev
+
+  for (let nodeIndex = 0; nodeIndex < routeNodes.length; nodeIndex += 1) {
+    if (!routeNodes[nodeIndex].isStation) continue
+    const anchor = nodeIndex * segmentCount
+    const crossed = wrapped
+      ? anchor > normalizedPrev || anchor <= normalizedNext
+      : anchor > normalizedPrev && anchor <= normalizedNext
+
+    if (crossed) {
+      return { nodeIndex, anchor }
+    }
+  }
+
+  return null
+}
+
 function getNextStationNodeIndex(routeNodes, pointIndex) {
   const currentNodeIndex = getNodeIndex(pointIndex) % routeNodes.length
-  for (let offset = 0; offset < routeNodes.length; offset += 1) {
-    const node = routeNodes[(currentNodeIndex + offset) % routeNodes.length]
+  const startOffset = isAtNodeAnchor(pointIndex) ? 0 : 1
+  for (let offset = startOffset; offset < routeNodes.length + startOffset; offset += 1) {
+    const nodeIndex = (currentNodeIndex + offset) % routeNodes.length
+    const node = routeNodes[nodeIndex]
     if (node.isStation) {
-      return (currentNodeIndex + offset) % routeNodes.length
+      return nodeIndex
     }
   }
   return 0
 }
 
-function estimateEtaMinutes(routePoints, pointIndex, targetNodeIndex) {
-  const targetPointIndex = targetNodeIndex * segmentCount
-  const total = routePoints.length
-  const diff = targetPointIndex >= pointIndex ? targetPointIndex - pointIndex : total - pointIndex + targetPointIndex
-  const seconds = diff * 1.2
+function formatEta(seconds) {
   const mins = Math.max(1, Math.ceil(seconds / 60))
   return `${mins} 分钟`
 }
 
-function buildStationMarkers(stations, baseId) {
+function estimateEtaMinutes(routeNodes, routePoints, pointIndex, speed, dwellLeftTicks = 0) {
+  const currentNodeIndex = getNodeIndex(pointIndex) % routeNodes.length
+  const atNodeAnchor = isAtNodeAnchor(pointIndex)
+  let nextStationNodeIndex = currentNodeIndex
+
+  if (!(atNodeAnchor && routeNodes[currentNodeIndex] && routeNodes[currentNodeIndex].isStation)) {
+    nextStationNodeIndex = getNextStationNodeIndex(routeNodes, pointIndex)
+  }
+
+  const targetPointIndex = nextStationNodeIndex * segmentCount
+  const total = routePoints.length
+  const normalizedPointIndex = normalizePointIndex(pointIndex, total)
+  const diff = targetPointIndex >= normalizedPointIndex
+    ? targetPointIndex - normalizedPointIndex
+    : total - normalizedPointIndex + targetPointIndex
+  const pointsPerSecond = speed * (1000 / tickMs)
+  const travelSeconds = pointsPerSecond > 0 ? diff / pointsPerSecond : 0
+  const dwellSeconds = Math.max(0, dwellLeftTicks) * tickMs / 1000
+  return formatEta(travelSeconds + dwellSeconds)
+}
+
+function buildStationMarkers(stations, baseId, showLabel = false) {
   return stations.map((station, idx) => ({
     id: baseId + idx,
     latitude: station.latitude,
     longitude: station.longitude,
     width: 20,
     height: 20,
-    callout: {
-      content: station.name,
-      color: '#334155',
-      fontSize: 11,
-      borderRadius: 8,
-      padding: 6,
-      display: 'BYCLICK'
-    }
+    label: showLabel
+      ? {
+          content: station.name,
+          color: '#334155',
+          fontSize: 11,
+          borderRadius: 8,
+          bgColor: '#ffffff',
+          padding: 6,
+          textAlign: 'center'
+        }
+      : null
   }))
 }
 
+function getPointPosition(routePoints, pointIndex) {
+  const total = routePoints.length
+  const normalizedIndex = normalizePointIndex(pointIndex, total)
+  const baseIndex = Math.floor(normalizedIndex)
+  const nextIndex = (baseIndex + 1) % total
+  const progress = normalizedIndex - baseIndex
+  const current = routePoints[baseIndex]
+  const next = routePoints[nextIndex]
+
+  return {
+    latitude: Number((current.latitude + (next.latitude - current.latitude) * progress).toFixed(6)),
+    longitude: Number((current.longitude + (next.longitude - current.longitude) * progress).toFixed(6))
+  }
+}
+
 function buildBusMarkers(routePoints, busStates, baseId) {
-  return busStates.map((bus, idx) => ({
-    id: baseId + idx,
-    latitude: routePoints[bus.index].latitude,
-    longitude: routePoints[bus.index].longitude,
-    width: 30,
-    height: 30,
-    callout: {
-      content: `${bus.name}`,
-      color: '#1e3a8a',
-      fontSize: 11,
-      borderRadius: 8,
-      padding: 6,
-      display: 'ALWAYS'
+  return busStates.map((bus, idx) => {
+    const position = getPointPosition(routePoints, bus.index)
+    return {
+      id: baseId + idx,
+      latitude: position.latitude,
+      longitude: position.longitude,
+      width: 30,
+      height: 30,
+      callout: {
+        content: `${bus.name}`,
+        color: '#1e3a8a',
+        fontSize: 11,
+        borderRadius: 8,
+        padding: 6,
+        display: 'ALWAYS'
+      }
     }
-  }))
+  })
+}
+
+function buildMarkers(linesState, busesState, showStationLabel = false) {
+  return [
+    ...buildStationMarkers(linesState.line1.routeNodes.filter(node => node.isStation), 1000, showStationLabel),
+    ...buildStationMarkers(linesState.line2.routeNodes.filter(node => node.isStation), 2000, showStationLabel),
+    ...buildStationMarkers(linesState.line3.routeNodes.filter(node => node.isStation), 3000, showStationLabel),
+    ...buildStationMarkers(linesState.line4.routeNodes.filter(node => node.isStation), 4000, showStationLabel),
+    ...buildBusMarkers(linesState.line1.routePoints, busesState.filter(bus => bus.lineId === 'line1'), 10),
+    ...buildBusMarkers(linesState.line2.routePoints, busesState.filter(bus => bus.lineId === 'line2'), 20),
+    ...buildBusMarkers(linesState.line3.routePoints, busesState.filter(bus => bus.lineId === 'line3'), 30),
+    ...buildBusMarkers(linesState.line4.routePoints, busesState.filter(bus => bus.lineId === 'line4'), 40)
+  ]
 }
 
 function createLineState(lineId) {
@@ -226,13 +311,17 @@ function createLineState(lineId) {
   const busStates = buses
     .filter(bus => bus.lineId === lineId)
     .map(bus => {
-      const index = bus.offset % routePoints.length
-      const stationNodeIndex = getNextStationNodeIndex(routeNodes, index)
+      const index = normalizePointIndex(bus.offset, routePoints.length)
+      const currentNodeIndex = getNodeIndex(index) % routeNodes.length
+      const atStation = isAtNodeAnchor(index) && Boolean(routeNodes[currentNodeIndex] && routeNodes[currentNodeIndex].isStation)
+      const dwellLeftTicks = atStation ? dwellTicks : 0
+      const stationNodeIndex = atStation ? currentNodeIndex : getNextStationNodeIndex(routeNodes, index)
       return {
         ...bus,
         index,
+        dwellLeftTicks,
         station: routeNodes[stationNodeIndex].name,
-        eta: estimateEtaMinutes(routePoints, index, stationNodeIndex)
+        eta: estimateEtaMinutes(routeNodes, routePoints, index, bus.speed, dwellLeftTicks)
       }
     })
 
@@ -253,31 +342,23 @@ const lineStates = {
   line4: createLineState('line4')
 }
 
-function buildInitialState() {
+function buildInitialState(showStationLabel = false) {
   const line1 = lineStates.line1
   const line2 = lineStates.line2
   const line3 = lineStates.line3
   const line4 = lineStates.line4
   const busStates = [...line1.busStates, ...line2.busStates, ...line3.busStates, ...line4.busStates]
+  const linesState = {
+    line1: { name: line1.lineName, color: line1.lineColor, routePoints: line1.routePoints, routeNodes: line1.routeNodes },
+    line2: { name: line2.lineName, color: line2.lineColor, routePoints: line2.routePoints, routeNodes: line2.routeNodes },
+    line3: { name: line3.lineName, color: line3.lineColor, routePoints: line3.routePoints, routeNodes: line3.routeNodes },
+    line4: { name: line4.lineName, color: line4.lineColor, routePoints: line4.routePoints, routeNodes: line4.routeNodes }
+  }
 
   return {
-    lines: {
-      line1: { name: line1.lineName, color: line1.lineColor, routePoints: line1.routePoints, routeNodes: line1.routeNodes },
-      line2: { name: line2.lineName, color: line2.lineColor, routePoints: line2.routePoints, routeNodes: line2.routeNodes },
-      line3: { name: line3.lineName, color: line3.lineColor, routePoints: line3.routePoints, routeNodes: line3.routeNodes },
-      line4: { name: line4.lineName, color: line4.lineColor, routePoints: line4.routePoints, routeNodes: line4.routeNodes }
-    },
+    lines: linesState,
     buses: busStates,
-    markers: [
-      ...buildStationMarkers(line1.routeNodes.filter(node => node.isStation), 1000),
-      ...buildStationMarkers(line2.routeNodes.filter(node => node.isStation), 2000),
-      ...buildStationMarkers(line3.routeNodes.filter(node => node.isStation), 3000),
-      ...buildStationMarkers(line4.routeNodes.filter(node => node.isStation), 4000),
-      ...buildBusMarkers(line1.routePoints, line1.busStates, 10),
-      ...buildBusMarkers(line2.routePoints, line2.busStates, 20),
-      ...buildBusMarkers(line3.routePoints, line3.busStates, 30),
-      ...buildBusMarkers(line4.routePoints, line4.busStates, 40)
-    ],
+    markers: buildMarkers(linesState, busStates, showStationLabel),
     polyline: [
       { points: line1.routePoints, color: line1.lineColor, width: 5, dottedLine: false },
       { points: line2.routePoints, color: line2.lineColor, width: 5, dottedLine: false },
@@ -288,7 +369,7 @@ function buildInitialState() {
   }
 }
 
-function nextState(prevBuses, prevLines) {
+function nextState(prevBuses, prevLines, showStationLabel = false) {
   const line1 = prevLines?.line1 || lineStates.line1
   const line2 = prevLines?.line2 || lineStates.line2
   const line3 = prevLines?.line3 || lineStates.line3
@@ -296,38 +377,56 @@ function nextState(prevBuses, prevLines) {
 
   const busesNext = prevBuses.map(bus => {
     const line = bus.lineId === 'line2' ? line2 : bus.lineId === 'line3' ? line3 : bus.lineId === 'line4' ? line4 : line1
-    const nextIndex = (bus.index + bus.step) % line.routePoints.length
-    const stationNodeIndex = getNextStationNodeIndex(line.routeNodes, nextIndex)
+    const currentNodeIndex = getNodeIndex(bus.index) % line.routeNodes.length
+    const atStation = isAtNodeAnchor(bus.index) && Boolean(line.routeNodes[currentNodeIndex] && line.routeNodes[currentNodeIndex].isStation)
+
+    if (atStation && (bus.dwellLeftTicks || 0) > 0) {
+      const dwellLeftTicks = bus.dwellLeftTicks - 1
+      return {
+        ...bus,
+        dwellLeftTicks,
+        station: line.routeNodes[currentNodeIndex].name,
+        eta: estimateEtaMinutes(line.routeNodes, line.routePoints, bus.index, bus.speed, dwellLeftTicks)
+      }
+    }
+
+    const nextIndex = normalizePointIndex(bus.index + bus.speed, line.routePoints.length)
+    const reachedStation = getReachedStationNodeIndex(bus.index, nextIndex, line.routeNodes, line.routePoints.length)
+    const actualIndex = reachedStation ? reachedStation.anchor : nextIndex
+    const nextNodeIndex = getNodeIndex(actualIndex) % line.routeNodes.length
+    const nextAtStation = Boolean(reachedStation) || (isAtNodeAnchor(actualIndex) && Boolean(line.routeNodes[nextNodeIndex] && line.routeNodes[nextNodeIndex].isStation))
+    const dwellLeftTicks = nextAtStation ? dwellTicks : 0
+    const stationNodeIndex = nextAtStation ? nextNodeIndex : getNextStationNodeIndex(line.routeNodes, actualIndex)
+
     return {
       ...bus,
-      index: nextIndex,
+      index: actualIndex,
+      dwellLeftTicks,
       station: line.routeNodes[stationNodeIndex].name,
-      eta: estimateEtaMinutes(line.routePoints, nextIndex, stationNodeIndex)
+      eta: estimateEtaMinutes(line.routeNodes, line.routePoints, actualIndex, bus.speed, dwellLeftTicks)
     }
   })
 
-  const line1Buses = busesNext.filter(bus => bus.lineId === 'line1')
-  const line2Buses = busesNext.filter(bus => bus.lineId === 'line2')
-  const line3Buses = busesNext.filter(bus => bus.lineId === 'line3')
-  const line4Buses = busesNext.filter(bus => bus.lineId === 'line4')
+  const linesState = { line1, line2, line3, line4 }
 
   return {
     buses: busesNext,
-    markers: [
-      ...buildStationMarkers(line1.routeNodes.filter(node => node.isStation), 1000),
-      ...buildStationMarkers(line2.routeNodes.filter(node => node.isStation), 2000),
-      ...buildStationMarkers(line3.routeNodes.filter(node => node.isStation), 3000),
-      ...buildStationMarkers(line4.routeNodes.filter(node => node.isStation), 4000),
-      ...buildBusMarkers(line1.routePoints, line1Buses, 10),
-      ...buildBusMarkers(line2.routePoints, line2Buses, 20),
-      ...buildBusMarkers(line3.routePoints, line3Buses, 30),
-      ...buildBusMarkers(line4.routePoints, line4Buses, 40)
-    ]
+    markers: buildMarkers(linesState, busesNext, showStationLabel)
   }
+}
+
+function buildMarkersForState(busesState, linesState, showStationLabel = false) {
+  const line1 = linesState?.line1 || lineStates.line1
+  const line2 = linesState?.line2 || lineStates.line2
+  const line3 = linesState?.line3 || lineStates.line3
+  const line4 = linesState?.line4 || lineStates.line4
+
+  return buildMarkers({ line1, line2, line3, line4 }, busesState, showStationLabel)
 }
 
 module.exports = {
   lines,
   buildInitialState,
-  nextState
+  nextState,
+  buildMarkersForState
 }

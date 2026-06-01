@@ -39,7 +39,15 @@ Page({
   onLoad() {
     wx.removeStorageSync('rideDraft')
     const allStations = getAllStations()
-    const uniqueStations = [...new Map(allStations.map(item => [item.name, item])).values()]
+    const uniqueStations = []
+    const seen = {}
+
+    allStations.forEach(item => {
+      if (!item || !item.name || seen[item.name]) return
+      seen[item.name] = true
+      uniqueStations.push(item)
+    })
+
     this.setData({
       allStations: uniqueStations,
       endCandidates: uniqueStations.map(item => item.name)

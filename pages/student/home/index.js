@@ -1,5 +1,6 @@
-const { buildInitialState, nextState } = require('../../../utils/mock/bus-simulator')
+const { buildInitialState, nextState, buildMarkersForState } = require('../../../utils/mock/bus-simulator')
 
+const STATION_LABEL_SCALE = 16
 let timer = null
 
 Page({
@@ -9,25 +10,16 @@ Page({
     markers: [],
     polyline: [],
     center: { lat: 28.681771, lng: 115.935563 },
-    rideStatus: '未乘车'
+    rideStatus: '未乘车',
+    showStationLabel: false
   },
 
   onLoad() {
-    const initial = buildInitialState()
-    const rideState = wx.getStorageSync('currentRideState')
-    this.setData({
-      ...initial,
-      rideStatus: rideState && !rideState.finished ? '乘车中' : '未乘车'
-    })
+    this.resetViewState()
   },
 
   onPullDownRefresh() {
-    const initial = buildInitialState()
-    const rideState = wx.getStorageSync('currentRideState')
-    this.setData({
-      ...initial,
-      rideStatus: rideState && !rideState.finished ? '乘车中' : '未乘车'
-    })
+    this.resetViewState()
     wx.stopPullDownRefresh()
   },
 
@@ -43,18 +35,45 @@ Page({
     this.stopSimulation()
   },
 
+  resetViewState() {
+    const initial = buildInitialState(this.data.showStationLabel)
+    const rideState = wx.getStorageSync('currentRideState')
+    this.setData({
+      ...initial,
+      rideStatus: rideState && !rideState.finished ? '乘车中' : '未乘车'
+    })
+  },
+
   startSimulation() {
     if (timer) return
     timer = setInterval(() => {
-      const next = nextState(this.data.buses, this.data.lines)
+      const next = nextState(this.data.buses, this.data.lines, this.data.showStationLabel)
       this.setData(next)
-    }, 800)
+    }, 100)
   },
 
   stopSimulation() {
     if (!timer) return
     clearInterval(timer)
     timer = null
+  },
+
+  onMapRegionChange(e) {
+    if (e.type !== 'end') return
+
+    const mapContext = wx.createMapContext('student-bus-map', this)
+    mapContext.getScale({
+      success: res => {
+        const scale = res.scale || 0
+        const showStationLabel = scale >= STATION_LABEL_SCALE
+        if (showStationLabel === this.data.showStationLabel) return
+
+        this.setData({
+          showStationLabel,
+          markers: buildMarkersForState(this.data.buses, this.data.lines, showStationLabel)
+        })
+      }
+    })
   },
 
   goRideRequest() {
