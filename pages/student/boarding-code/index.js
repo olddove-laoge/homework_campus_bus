@@ -4,7 +4,7 @@ try {
 } catch (error) {
   genQrcode = null
 }
-const { getRideState, issueBoardingCode, getLatestBoardingCodeText } = require('../../../utils/mock/ride-session-store')
+const { issueBoardingCode } = require('../../../utils/services/ride-cloud')
 
 Page({
   data: {
@@ -70,23 +70,38 @@ Page({
   },
 
   refreshCode() {
-    const result = issueBoardingCode()
-    const state = result.success ? result.state : getRideState()
-    const payload = result.success ? result.payload : state?.boardCode
-    const codeText = result.success ? result.codeText : getLatestBoardingCodeText()
-
-    if (!payload || !codeText) {
+    const rideState = wx.getStorageSync('currentRideState') || {}
+    const rideId = rideState.rideId || rideState._id || rideState.boardCode?.rideId || ''
+    if (!rideId) {
+      this.setData({ qrError: '未找到当前行程标识，请先重新生成乘车方案。' })
       wx.showToast({ title: '暂无可用乘车码', icon: 'none' })
       return
     }
 
-    this.setData({
-      codeText,
-      lineName: payload.lineName || '',
-      startStation: payload.startStation || '',
-      endStation: payload.endStation || '',
-      segmentIndex: Number(payload.segmentIndex || 0) + 1,
-      issuedAtText: new Date(payload.issuedAt).toLocaleString()
-    }, () => this.renderCode())
+    issueBoardingCode(rideId).then(result => {
+      if (!result.success) {
+        this.setData({ qrError: result.message || '生成乘车码失败' })
+        wx.showToast({ title: result.message || '生成乘车码失败', icon: 'none' })
+        return
+      }
+
+      const payload = result.payload
+      const codeText = result.codeText
+      wx.setStorageSync('currentRideState', result.state)
+
+      this.setData({
+        qrError: '',
+        codeText,
+        lineName: payload.lineName || '',
+        startStation: payload.startStation || '',
+        endStation: payload.endStation || '',
+        segmentIndex: Number(payload.segmentIndex || 0) + 1,
+        issuedAtText: new Date(payload.issuedAt).toLocaleString()
+      }, () => this.renderCode())
+    }).catch(error => {
+      const message = error && error.errMsg ? error.errMsg : '生成乘车码失败'
+      this.setData({ qrError: message })
+      wx.showToast({ title: '生成乘车码失败', icon: 'none' })
+    })
   }
 })

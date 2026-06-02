@@ -12,6 +12,7 @@
       <view class="muted">当前站点：{{timelineStops[activeIndex].name || startStation}}</view>
       <view class="muted" style="margin-top: 8rpx;">当前乘车段：第{{currentSegmentIndex + 1}}段 · {{currentSegmentName}}</view>
       <view class="muted" style="margin-top: 8rpx;">本段路线：{{currentSegmentStart}} → {{currentSegmentEnd}}</view>
+      <view wx:if="{{currentSegmentDirection}}" class="muted" style="margin-top: 8rpx;">当前方向：{{currentSegmentDirection === 'forward' ? '正向' : '返向'}}</view>
       <view wx:if="{{currentBusName}}" class="muted" style="margin-top: 8rpx;">已绑定车辆：{{currentBusName}}</view>
       <view wx:if="{{currentBusStation}}" class="muted" style="margin-top: 8rpx;">车辆当前站点：{{currentBusStation}}</view>
       <view wx:if="{{transferStations.length}}" class="muted" style="margin-top: 8rpx;">换乘站：{{transferStations.join(' / ')}}</view>
@@ -19,7 +20,9 @@
 
     <view class="card" wx:if="{{rideStatusKey === 'pending_boarding'}}">
       <view class="section-title">待上车</view>
-      <view class="muted">请先打开乘车码给司机扫码，成功后本段行程会绑定到具体校巴。</view>
+      <view wx:if="{{waitingBusArrived}}" class="muted">车辆已到达，请尽快扫码乘车。</view>
+      <view wx:elif="{{waitingBusName}}" class="muted">距离当前站点最近的车为 {{waitingBusName}}，还有 {{waitingBusStops}} 站到达，请等待。</view>
+      <view wx:else class="muted">正在等待当前线路与方向匹配的车辆，请稍候。</view>
       <button class="primary-btn" style="width: 100%; margin-top: 18rpx;" bindtap="showBoardingCode">打开乘车码</button>
     </view>
 

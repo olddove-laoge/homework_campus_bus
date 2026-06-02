@@ -3,10 +3,14 @@ const LATEST_BOARDING_CODE_KEY = 'latestBoardingCode'
 const BOARDING_CODE_MAP_KEY = 'boardingCodePayloadMap'
 
 const DRIVER_BUSES = [
-  { busId: 'S1', busName: '校巴1号', lineId: 'line1', lineName: '一号线' },
-  { busId: 'S2', busName: '校巴2号', lineId: 'line2', lineName: '二号线' },
-  { busId: 'S3', busName: '校巴3号', lineId: 'line4', lineName: '四号线' },
-  { busId: 'S4', busName: '校巴4号', lineId: 'line3', lineName: '三号线' }
+  { busId: 'S1', busName: '校巴1号', lineId: 'line1', lineName: '一号线', direction: 'forward' },
+  { busId: 'S2', busName: '校巴2号', lineId: 'line1', lineName: '一号线', direction: 'backward' },
+  { busId: 'S3', busName: '校巴3号', lineId: 'line2', lineName: '二号线', direction: 'forward' },
+  { busId: 'S4', busName: '校巴4号', lineId: 'line2', lineName: '二号线', direction: 'backward' },
+  { busId: 'S5', busName: '校巴5号', lineId: 'line3', lineName: '三号线', direction: 'forward' },
+  { busId: 'S6', busName: '校巴6号', lineId: 'line3', lineName: '三号线', direction: 'backward' },
+  { busId: 'S7', busName: '校巴7号', lineId: 'line4', lineName: '四号线', direction: 'forward' },
+  { busId: 'S8', busName: '校巴8号', lineId: 'line4', lineName: '四号线', direction: 'backward' }
 ]
 
 function clone(value) {
@@ -166,6 +170,10 @@ function bindRideToBus(codeText, driverBus) {
 
   if (!driverBus || driverBus.lineId !== segment.lineId) {
     return { success: false, message: '该乘车码不属于当前车辆线路' }
+  }
+
+  if (segment.direction && driverBus.direction && segment.direction !== driverBus.direction) {
+    return { success: false, message: '当前车辆行驶方向不匹配' }
   }
 
   const segmentBindings = state.segmentBindings.map(binding => {

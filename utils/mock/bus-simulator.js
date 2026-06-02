@@ -129,9 +129,14 @@ const lines = {
 }
 
 const buses = [
-  { id: 'S1', name: '校巴1号', lineId: 'line1', seats: '26/40', load: 65, temp: 24, offset: 0, speed: 0.12 },
-  { id: 'S2', name: '校巴2号', lineId: 'line2', seats: '14/40', load: 35, temp: 23, offset: 72, speed: 0.1 },
-  { id: 'S3', name: '校巴3号', lineId: 'line4', seats: '31/40', load: 78, temp: 25, offset: 132, speed: 0.14 }
+  { id: 'S1', name: '校巴1号', lineId: 'line1', direction: 'forward', seats: '26/40', load: 65, temp: 24, offset: 0, speed: 0.12 },
+  { id: 'S2', name: '校巴2号', lineId: 'line1', direction: 'backward', seats: '18/40', load: 45, temp: 23, offset: 78, speed: 0.11 },
+  { id: 'S3', name: '校巴3号', lineId: 'line2', direction: 'forward', seats: '14/40', load: 35, temp: 23, offset: 24, speed: 0.1 },
+  { id: 'S4', name: '校巴4号', lineId: 'line2', direction: 'backward', seats: '22/40', load: 55, temp: 24, offset: 126, speed: 0.09 },
+  { id: 'S5', name: '校巴5号', lineId: 'line3', direction: 'forward', seats: '20/40', load: 50, temp: 24, offset: 48, speed: 0.1 },
+  { id: 'S6', name: '校巴6号', lineId: 'line3', direction: 'backward', seats: '12/40', load: 30, temp: 22, offset: 196, speed: 0.11 },
+  { id: 'S7', name: '校巴7号', lineId: 'line4', direction: 'forward', seats: '31/40', load: 78, temp: 25, offset: 132, speed: 0.14 },
+  { id: 'S8', name: '校巴8号', lineId: 'line4', direction: 'backward', seats: '16/40', load: 40, temp: 23, offset: 228, speed: 0.12 }
 ]
 
 const segmentCount = 12
@@ -428,7 +433,7 @@ function buildMarkersForState(busesState, linesState, showStationLabel = false) 
 
 function getLiveSimulationState(showStationLabel = false) {
   const stored = wx.getStorageSync(LIVE_STATE_KEY)
-  if (stored && stored.lines && stored.buses) {
+  if (stored && stored.lines && stored.buses && stored.buses.length === buses.length) {
     return {
       ...stored,
       markers: buildMarkersForState(stored.buses, stored.lines, showStationLabel)

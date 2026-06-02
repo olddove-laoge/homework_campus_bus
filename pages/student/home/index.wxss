@@ -5,3 +5,15 @@
   border-radius: 16rpx;
   overflow: hidden;
 }
+
+.bus-list-scroll {
+  height: 520rpx;
+}
+
+.bus-card {
+  margin-bottom: 16rpx;
+}
+
+.bus-card:last-child {
+  margin-bottom: 0;
+}

@@ -34,6 +34,12 @@ function routeDistance(nodes, startIndex, endIndex) {
   return total
 }
 
+function buildSegmentDirection(stations = []) {
+  if (!stations.length) return 'forward'
+  const backward = stations.some(name => /\((返程|终点)\)$/.test(name))
+  return backward ? 'backward' : 'forward'
+}
+
 function buildStationGraph() {
   const graph = new Map()
   const registry = new Map()
@@ -138,11 +144,13 @@ function dijkstra(start, end) {
         lineId: edge.lineId,
         lineName: edge.lineName,
         stations: [edge.from, edge.to],
-        distance: edge.distance
+        distance: edge.distance,
+        direction: buildSegmentDirection([edge.from, edge.to])
       })
     } else {
       last.stations.push(edge.to)
       last.distance += edge.distance
+      last.direction = buildSegmentDirection(last.stations)
     }
   })
 

@@ -10,7 +10,7 @@
     <view class="card qrcode-card">
       <canvas type="2d" id="boardingQrcode" class="qrcode-canvas"></canvas>
       <view wx:if="{{qrError}}" class="qr-error">{{qrError}}</view>
-      <view class="code-token">{{codeText}}</view>
+      <view wx:if="{{codeText}}" class="code-token">{{codeText}}</view>
       <view class="muted" style="margin-top: 16rpx;">生成时间：{{issuedAtText}}</view>
       <button class="primary-btn" style="width: 100%; margin-top: 18rpx;" bindtap="refreshCode">刷新乘车码</button>
     </view>
