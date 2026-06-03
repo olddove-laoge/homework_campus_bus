@@ -1,4 +1,5 @@
 const { lines } = require('./bus-simulator')
+const { getRoutesCache, getStationsCache } = require('../services/transit-data')
 
 function normalizeStationName(name) {
   return String(name || '')
@@ -40,6 +41,43 @@ function buildSegmentDirection(stations = []) {
   return backward ? 'backward' : 'forward'
 }
 
+function getStationMap() {
+  const stationDocs = getStationsCache()
+  return (stationDocs || []).reduce((acc, item) => {
+    acc[item.stationName] = item
+    ;(item.aliases || []).forEach(alias => {
+      acc[alias] = item
+    })
+    return acc
+  }, {})
+}
+
+function getRouteSource() {
+  const cloudRoutes = getRoutesCache()
+  if (Array.isArray(cloudRoutes) && cloudRoutes.length) {
+    const stationMap = getStationMap()
+    return cloudRoutes.reduce((acc, route) => {
+      acc[route._id] = {
+        name: route.lineName,
+        color: route.color,
+        routeNodes: (route.stations || []).map((stationName, index) => {
+          const station = stationMap[stationName] || {}
+          return {
+            id: `${route._id}-st-${index + 1}`,
+            name: stationName,
+            latitude: station.latitude || 0,
+            longitude: station.longitude || 0,
+            isStation: true
+          }
+        })
+      }
+      return acc
+    }, {})
+  }
+
+  return lines
+}
+
 function buildStationGraph() {
   const graph = new Map()
   const registry = new Map()
@@ -49,7 +87,7 @@ function buildStationGraph() {
     graph.get(from).push(edge)
   }
 
-  Object.entries(lines).forEach(([lineId, line]) => {
+  Object.entries(getRouteSource()).forEach(([lineId, line]) => {
     const nodes = buildLineNodes(line)
     const stationIndexes = nodes
       .map((node, index) => (node.isStation === false ? -1 : index))

@@ -20,8 +20,8 @@
         <view class="muted" style="margin-bottom: 8rpx;">{{useGps ? '最近站点候选' : '全部站点（可点击选择）'}}</view>
         <scroll-view class="station-picker" scroll-y="true">
           <view class="tabs" style="grid-template-columns: repeat(2, 1fr);">
-            <view class="tab-item selectable" wx:for="{{startCandidates}}" wx:key="*this" bindtap="pickStart" data-name="{{item}}">
-              <view class="tab-title">{{item}}</view>
+            <view class="tab-item selectable" wx:for="{{startCandidates}}" wx:key="id" bindtap="pickStart" data-name="{{item.name}}">
+              <view class="tab-title">{{item.name}}</view>
             </view>
           </view>
         </scroll-view>
@@ -35,8 +35,8 @@
         <view class="muted" style="margin-bottom: 8rpx;">全部站点（可点击选择）</view>
         <scroll-view class="station-picker" scroll-y="true">
           <view class="tabs" style="grid-template-columns: repeat(2, 1fr);">
-            <view class="tab-item selectable" wx:for="{{endCandidates}}" wx:key="*this" bindtap="pickEnd" data-name="{{item}}">
-              <view class="tab-title">{{item}}</view>
+            <view class="tab-item selectable" wx:for="{{endCandidates}}" wx:key="id" bindtap="pickEnd" data-name="{{item.name}}">
+              <view class="tab-title">{{item.name}}</view>
             </view>
           </view>
         </scroll-view>

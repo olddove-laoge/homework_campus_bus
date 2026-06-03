@@ -3,18 +3,18 @@
   <scroll-view class="scroll-area" scroll-y="true" type="list">
     <view class="card" style="background: linear-gradient(120deg, #d1fae5, #ecfeff);">
       <view class="section-title">今日任务</view>
-      <view class="muted">车辆：校巴1号 · 线路：东环线 · 班次：08:00-18:00</view>
+      <view class="muted">车辆：{{busName}} · 线路：{{lineName}} · 方向：{{directionText}}</view>
     </view>
 
     <view class="kpi-grid">
-      <view class="card"><view class="kpi-value">24°C</view><view class="kpi-label">车内温度</view></view>
-      <view class="card"><view class="kpi-value">26/40</view><view class="kpi-label">当前载客</view></view>
+      <view class="card"><view class="kpi-value">{{temperature}}</view><view class="kpi-label">车内温度</view></view>
+      <view class="card"><view class="kpi-value">{{loadText}}</view><view class="kpi-label">当前载客</view></view>
     </view>
 
     <view class="card">
       <view class="section-title">运行状态</view>
-      <view class="list-item row"><text>当前位置</text><text class="muted">教学楼A站附近</text></view>
-      <view class="list-item row"><text>下一站</text><text class="muted">体育馆站</text></view>
+      <view class="list-item row"><text>当前位置</text><text class="muted">{{currentStation}}</text></view>
+      <view class="list-item row"><text>下一站</text><text class="muted">{{nextStation}}</text></view>
       <view class="list-item row"><text>位置上报</text><text class="badge">开启中</text></view>
     </view>
 

@@ -1,15 +1,10 @@
-const ACCOUNTS = [
-  { username: 'student', password: '123456', role: 'student', home: '/pages/student/home/index', roleName: '学生端' },
-  { username: 'driver1', password: '123456', role: 'driver', home: '/pages/driver/dashboard/index', roleName: '司机端', busId: 'S1', busName: '校巴1号' },
-  { username: 'driver2', password: '123456', role: 'driver', home: '/pages/driver/dashboard/index', roleName: '司机端', busId: 'S2', busName: '校巴2号' },
-  { username: 'driver3', password: '123456', role: 'driver', home: '/pages/driver/dashboard/index', roleName: '司机端', busId: 'S3', busName: '校巴3号' },
-  { username: 'driver4', password: '123456', role: 'driver', home: '/pages/driver/dashboard/index', roleName: '司机端', busId: 'S4', busName: '校巴4号' },
-  { username: 'driver5', password: '123456', role: 'driver', home: '/pages/driver/dashboard/index', roleName: '司机端', busId: 'S5', busName: '校巴5号' },
-  { username: 'driver6', password: '123456', role: 'driver', home: '/pages/driver/dashboard/index', roleName: '司机端', busId: 'S6', busName: '校巴6号' },
-  { username: 'driver7', password: '123456', role: 'driver', home: '/pages/driver/dashboard/index', roleName: '司机端', busId: 'S7', busName: '校巴7号' },
-  { username: 'driver8', password: '123456', role: 'driver', home: '/pages/driver/dashboard/index', roleName: '司机端', busId: 'S8', busName: '校巴8号' },
-  { username: 'admin', password: '123456', role: 'admin', home: '/pages/admin/dashboard/index', roleName: '管理端' }
-]
+const { getUsersByUsername } = require('../../utils/services/master-data')
+
+const ROLE_HOME_MAP = {
+  student: { home: '/pages/student/home/index', roleName: '学生端' },
+  driver: { home: '/pages/driver/dashboard/index', roleName: '司机端' },
+  admin: { home: '/pages/admin/dashboard/index', roleName: '管理端' }
+}
 
 Page({
   data: {
@@ -36,24 +31,36 @@ Page({
       return
     }
 
-    const matched = ACCOUNTS.find(item => item.username === username && item.password === password)
-    if (!matched) {
-      wx.showToast({ title: '账号或密码错误', icon: 'none' })
-      return
-    }
+    getUsersByUsername(username).then(users => {
+      const matched = (users || [])[0]
+      if (!matched || matched.password !== password || matched.status !== 'active') {
+        wx.showToast({ title: '账号或密码错误', icon: 'none' })
+        return
+      }
 
-    wx.setStorageSync('auth', {
-      username: matched.username,
-      role: matched.role,
-      roleName: matched.roleName,
-      busId: matched.busId || '',
-      busName: matched.busName || '',
-      loginAt: Date.now()
+      const roleConfig = ROLE_HOME_MAP[matched.role]
+      if (!roleConfig) {
+        wx.showToast({ title: '账号角色异常', icon: 'none' })
+        return
+      }
+
+      wx.setStorageSync('auth', {
+        userId: matched._id,
+        username: matched.username,
+        role: matched.role,
+        roleName: roleConfig.roleName,
+        displayName: matched.displayName || matched.username,
+        busId: matched.driverBusId || '',
+        busName: matched.driverBusName || '',
+        loginAt: Date.now()
+      })
+
+      wx.showToast({ title: `登录成功（${roleConfig.roleName}）`, icon: 'none' })
+      setTimeout(() => {
+        wx.navigateTo({ url: roleConfig.home })
+      }, 250)
+    }).catch(() => {
+      wx.showToast({ title: '登录失败，请检查云数据库', icon: 'none' })
     })
-
-    wx.showToast({ title: `登录成功（${matched.roleName}）`, icon: 'none' })
-    setTimeout(() => {
-      wx.navigateTo({ url: matched.home })
-    }, 250)
   }
 })

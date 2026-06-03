@@ -1,71 +1,17 @@
-const { getLiveSimulationState, tickLiveSimulation, lines } = require('../../../utils/mock/bus-simulator')
+const { getLiveSimulationState, tickLiveSimulation } = require('../../../utils/mock/bus-simulator')
+const { getStations } = require('../../../utils/services/transit-data')
+const { DEFAULT_STATION, normalizeStationName, mapStationDocs, getNearestStationName } = require('../../../utils/services/station-helper')
+const { countStopsToStation } = require('../../../utils/services/route-helper')
 
-const DEFAULT_STATION = '国威路(地铁)站'
 let timer = null
-
-function buildLineNodes(line) {
-  if (Array.isArray(line.routeNodes) && line.routeNodes.length) {
-    return line.routeNodes
-  }
-
-  const stations = line.stations || []
-  const waypoints = line.waypoints || []
-  return [
-    ...stations.slice(0, -1).map(item => ({ ...item, isStation: true })),
-    ...waypoints,
-    stations[stations.length - 1]
-  ].filter(Boolean)
-}
-
-function getAllStations() {
-  return Object.values(lines).flatMap(line => buildLineNodes(line).filter(node => node.isStation !== false))
-}
-
-function normalizeStationName(name) {
-  return String(name || '')
-    .replace(/\s*\((返程|终点)\)$/, '')
-    .trim()
-}
-
-function distance(a, b) {
-  const dx = (a.latitude - b.latitude) * 111000
-  const dy = (a.longitude - b.longitude) * 85000
-  return Math.sqrt(dx * dx + dy * dy)
-}
-
-function getNearestStationName(location) {
-  const stations = getAllStations()
-  const matched = stations
-    .map(station => ({
-      ...station,
-      dist: distance(location, station)
-    }))
-    .sort((a, b) => a.dist - b.dist)[0]
-
-  return normalizeStationName(matched?.name || DEFAULT_STATION)
-}
-
-function countStopsToStation(line, currentStationName, targetStationName) {
-  const nodes = buildLineNodes(line).filter(node => node.isStation !== false)
-  const currentIndex = nodes.findIndex(node => normalizeStationName(node.name) === normalizeStationName(currentStationName))
-  const targetIndex = nodes.findIndex(node => normalizeStationName(node.name) === normalizeStationName(targetStationName))
-  if (currentIndex === -1 || targetIndex === -1) return Number.MAX_SAFE_INTEGER
-  if (currentIndex === targetIndex) return 0
-  if (targetIndex > currentIndex) return targetIndex - currentIndex
-  return nodes.length - currentIndex + targetIndex
-}
 
 function getUpcomingBuses(stationName, buses) {
   const normalizedTarget = normalizeStationName(stationName)
   return (buses || [])
-    .map(bus => {
-      const line = lines[bus.lineId]
-      if (!line) return null
-      return {
-        ...bus,
-        stopsAway: countStopsToStation(line, bus.station, normalizedTarget)
-      }
-    })
+    .map(bus => ({
+      ...bus,
+      stopsAway: countStopsToStation(bus.lineId, bus.station, normalizedTarget)
+    }))
     .filter(Boolean)
     .sort((a, b) => a.stopsAway - b.stopsAway)
 }
@@ -75,12 +21,17 @@ Page({
     currentStationName: DEFAULT_STATION,
     nextBusName: '--',
     nextBusEta: '--',
-    upcomingBuses: []
+    upcomingBuses: [],
+    stationDocs: []
   },
 
   onLoad() {
     this.refreshEtaView()
-    this.initNearestStation()
+    getStations().then(stations => {
+      this.setData({ stationDocs: mapStationDocs(stations) }, () => this.initNearestStation())
+    }).catch(() => {
+      this.setData({ stationDocs: [] }, () => this.initNearestStation())
+    })
   },
 
   onShow() {
@@ -114,7 +65,7 @@ Page({
       type: 'gcj02',
       success: res => {
         this.setData({
-          currentStationName: getNearestStationName({ latitude: res.latitude, longitude: res.longitude })
+          currentStationName: getNearestStationName(this.data.stationDocs, { latitude: res.latitude, longitude: res.longitude })
         }, () => this.refreshEtaView())
       },
       fail: () => {

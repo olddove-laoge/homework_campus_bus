@@ -1,4 +1,5 @@
 const { bindRideToBus } = require('../../../utils/services/ride-cloud')
+const { getBusById } = require('../../../utils/services/master-data')
 const { getDriverBuses } = require('../../../utils/mock/ride-session-store')
 
 Page({
@@ -10,10 +11,24 @@ Page({
   onLoad() {
     const driverBuses = getDriverBuses()
     const auth = wx.getStorageSync('auth') || {}
-    const matchedBus = driverBuses.find(item => item.busId === auth.busId) || driverBuses[0] || null
+    const fallbackBus = driverBuses.find(item => item.busId === auth.busId) || driverBuses[0] || null
     this.setData({
-      driverBus: matchedBus
+      driverBus: fallbackBus
     })
+
+    if (!auth.busId) return
+    getBusById(auth.busId).then(bus => {
+      if (!bus) return
+      this.setData({
+        driverBus: {
+          busId: bus._id,
+          busName: bus.busName,
+          lineId: bus.lineId,
+          lineName: bus.lineName,
+          direction: bus.direction
+        }
+      })
+    }).catch(() => {})
   },
 
   handleScanCode() {

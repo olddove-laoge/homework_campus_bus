@@ -1,27 +1,19 @@
-const { lines } = require('../../../utils/mock/bus-simulator')
-
-function buildLineNodes(line) {
-  if (Array.isArray(line.routeNodes) && line.routeNodes.length) {
-    return line.routeNodes
-  }
-
-  const stations = line.stations || []
-  const waypoints = line.waypoints || []
-  return [
-    ...stations.slice(0, -1).map(item => ({ ...item, isStation: true })),
-    ...waypoints,
-    stations[stations.length - 1]
-  ].filter(Boolean)
-}
-
-function getAllStations() {
-  return Object.values(lines).flatMap(line => buildLineNodes(line).filter(node => node.isStation !== false))
-}
+const { getStations, saveStationsCache } = require('../../../utils/services/transit-data')
 
 function distance(a, b) {
   const dx = (a.latitude - b.latitude) * 111000
   const dy = (a.longitude - b.longitude) * 85000
   return Math.sqrt(dx * dx + dy * dy)
+}
+
+function dedupeStations(stations = []) {
+  const seen = new Set()
+  return stations.filter(item => {
+    const name = item && item.name
+    if (!name || seen.has(name)) return false
+    seen.add(name)
+    return true
+  })
 }
 
 Page({
@@ -38,21 +30,23 @@ Page({
 
   onLoad() {
     wx.removeStorageSync('rideDraft')
-    const allStations = getAllStations()
-    const uniqueStations = []
-    const seen = {}
+    getStations().then(stations => {
+      saveStationsCache(stations)
+      const allStations = dedupeStations((stations || []).map(item => ({
+        id: item._id,
+        name: item.stationName,
+        latitude: item.latitude,
+        longitude: item.longitude
+      })))
 
-    allStations.forEach(item => {
-      if (!item || !item.name || seen[item.name]) return
-      seen[item.name] = true
-      uniqueStations.push(item)
+      this.setData({
+        allStations,
+        endCandidates: allStations
+      })
+      this.requestLocation()
+    }).catch(() => {
+      wx.showToast({ title: '站点数据加载失败', icon: 'none' })
     })
-
-    this.setData({
-      allStations: uniqueStations,
-      endCandidates: uniqueStations.map(item => item.name)
-    })
-    this.requestLocation()
   },
 
   requestLocation() {
@@ -74,7 +68,7 @@ Page({
               locationGranted: false,
               gpsText: '未授权定位，请手动选择起点',
               startStation: '',
-              startCandidates: this.data.allStations.map(item => item.name)
+              startCandidates: this.data.allStations
             })
           }
         })
@@ -84,7 +78,7 @@ Page({
           locationGranted: false,
           gpsText: '无法获取授权状态，请手动选择起点',
           startStation: '',
-          startCandidates: this.data.allStations.map(item => item.name)
+          startCandidates: this.data.allStations
         })
       }
     })
@@ -94,7 +88,7 @@ Page({
     wx.getLocation({
       type: 'gcj02',
       success: res => {
-        const allStations = getAllStations()
+        const allStations = this.data.allStations || []
         const sorted = allStations
           .map(station => ({
             ...station,
@@ -105,14 +99,14 @@ Page({
         this.setData({
           gpsText: `已定位：${res.latitude.toFixed(6)}, ${res.longitude.toFixed(6)}`,
           startStation: nearest[0]?.name || '',
-          startCandidates: nearest.map(item => item.name)
+          startCandidates: nearest
         })
       },
       fail: () => {
         this.setData({
           gpsText: '定位失败，请手动选择起点',
           startStation: '',
-          startCandidates: this.data.allStations.map(item => item.name)
+          startCandidates: this.data.allStations
         })
       }
     })
@@ -124,7 +118,7 @@ Page({
   },
 
   chooseManual() {
-    const allNames = this.data.allStations.map(item => item.name)
+    const allNames = this.data.allStations
     this.setData({
       useGps: false,
       startStation: '',

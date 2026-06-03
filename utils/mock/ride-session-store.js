@@ -1,17 +1,8 @@
+const { getBusesCache } = require('../services/master-data')
+
 const RIDE_STATE_KEY = 'currentRideState'
 const LATEST_BOARDING_CODE_KEY = 'latestBoardingCode'
 const BOARDING_CODE_MAP_KEY = 'boardingCodePayloadMap'
-
-const DRIVER_BUSES = [
-  { busId: 'S1', busName: '校巴1号', lineId: 'line1', lineName: '一号线', direction: 'forward' },
-  { busId: 'S2', busName: '校巴2号', lineId: 'line1', lineName: '一号线', direction: 'backward' },
-  { busId: 'S3', busName: '校巴3号', lineId: 'line2', lineName: '二号线', direction: 'forward' },
-  { busId: 'S4', busName: '校巴4号', lineId: 'line2', lineName: '二号线', direction: 'backward' },
-  { busId: 'S5', busName: '校巴5号', lineId: 'line3', lineName: '三号线', direction: 'forward' },
-  { busId: 'S6', busName: '校巴6号', lineId: 'line3', lineName: '三号线', direction: 'backward' },
-  { busId: 'S7', busName: '校巴7号', lineId: 'line4', lineName: '四号线', direction: 'forward' },
-  { busId: 'S8', busName: '校巴8号', lineId: 'line4', lineName: '四号线', direction: 'backward' }
-]
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value))
@@ -42,7 +33,18 @@ function clearRideState() {
 }
 
 function getDriverBuses() {
-  return clone(DRIVER_BUSES)
+  const cachedBuses = getBusesCache()
+  if (Array.isArray(cachedBuses) && cachedBuses.length) {
+    return cachedBuses.map(bus => ({
+      busId: bus._id,
+      busName: bus.busName,
+      lineId: bus.lineId,
+      lineName: bus.lineName,
+      direction: bus.direction
+    }))
+  }
+
+  return []
 }
 
 function getCurrentSegment(state) {
