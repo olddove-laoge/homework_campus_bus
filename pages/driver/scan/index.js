@@ -9,8 +9,10 @@ Page({
 
   onLoad() {
     const driverBuses = getDriverBuses()
+    const auth = wx.getStorageSync('auth') || {}
+    const matchedBus = driverBuses.find(item => item.busId === auth.busId) || driverBuses[0] || null
     this.setData({
-      driverBus: driverBuses[0] || null
+      driverBus: matchedBus
     })
   },
 
@@ -27,6 +29,9 @@ Page({
       success: res => {
         bindRideToBus(res.result || '', driverBus).then(result => {
           if (!result.success) {
+            if (result.state) {
+              wx.setStorageSync('currentRideState', result.state)
+            }
             this.setData({ resultText: result.message })
             wx.showToast({ title: result.message, icon: 'none' })
             return

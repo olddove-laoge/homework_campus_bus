@@ -2,21 +2,22 @@
 <view class="scroll-page">
   <scroll-view class="scroll-area" scroll-y="true" type="list">
     <view class="card" style="background: linear-gradient(130deg, #dbeafe, #eff6ff);">
-      <view class="section-title">当前站点下一辆车</view>
-      <view class="row" style="margin-bottom: 16rpx;">
-        <view>
-          <view style="font-size: 30rpx; font-weight: 600;">一号线 / 二号线</view>
-          <view class="muted">下一辆：{{buses[0].name}} · {{buses[0].eta || '2 分钟'}}</view>
+      <view class="section-title">实时候车</view>
+      <view class="row home-hero-row" style="margin-bottom: 16rpx;">
+        <view class="home-hero-info">
+          <view class="home-hero-station">当前站点：{{currentStationName}}</view>
+          <view class="muted home-hero-next">下一辆车：{{nextBusName}} · {{nextBusEta}}</view>
         </view>
-        <view>
-          <button class="primary-btn" size="mini" bindtap="goRideRequest" style="margin-right: 12rpx;">我要乘车</button>
+        <view class="home-hero-actions">
+          <button class="primary-btn" size="mini" bindtap="goRideRequest">我要乘车</button>
           <button class="primary-btn" size="mini" bindtap="goEta">查看ETA</button>
         </view>
       </view>
       <view class="muted" style="margin-bottom: 12rpx;">
         <text style="margin-right: 24rpx; color: #2563eb;">一号线</text>
         <text style="margin-right: 24rpx; color: #f97316;">二号线</text>
-        <text style="color: #22c55e;">三号线</text>
+        <text style="margin-right: 24rpx; color: #22c55e;">三号线</text>
+        <text style="color: #a855f7;">四号线</text>
       </view>
       <map
         id="student-bus-map"

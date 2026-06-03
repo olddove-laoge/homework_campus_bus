@@ -1,10 +1,11 @@
 let genQrcode = null
+let timer = null
 try {
   genQrcode = require('@fourdim/wechat-miniapp-qrcode')
 } catch (error) {
   genQrcode = null
 }
-const { issueBoardingCode } = require('../../../utils/services/ride-cloud')
+const { issueBoardingCode, getRideState } = require('../../../utils/services/ride-cloud')
 
 Page({
   data: {
@@ -24,6 +25,38 @@ Page({
 
   onShow() {
     this.refreshCode()
+    this.startPollingState()
+  },
+
+  onHide() {
+    this.stopPollingState()
+  },
+
+  onUnload() {
+    this.stopPollingState()
+  },
+
+  startPollingState() {
+    if (timer) return
+    timer = setInterval(() => {
+      const rideState = wx.getStorageSync('currentRideState') || {}
+      const rideId = rideState.rideId || rideState._id || rideState.boardCode?.rideId || ''
+      if (!rideId) return
+
+      getRideState(rideId).then(result => {
+        if (!result.success || !result.state) return
+        wx.setStorageSync('currentRideState', result.state)
+        this.setData({
+          qrError: result.state.lastError || ''
+        })
+      }).catch(() => {})
+    }, 1000)
+  },
+
+  stopPollingState() {
+    if (!timer) return
+    clearInterval(timer)
+    timer = null
   },
 
   renderCode() {
@@ -90,7 +123,7 @@ Page({
       wx.setStorageSync('currentRideState', result.state)
 
       this.setData({
-        qrError: '',
+        qrError: result.state?.lastError || '',
         codeText,
         lineName: payload.lineName || '',
         startStation: payload.startStation || '',

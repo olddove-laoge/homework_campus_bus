@@ -5,18 +5,21 @@
       <view class="section-title">当前站点</view>
       <view class="row">
         <view>
-          <view style="font-size: 30rpx; font-weight: 600;">图书馆站</view>
-          <view class="muted">下一辆：校巴1号</view>
+          <view style="font-size: 30rpx; font-weight: 600;">{{currentStationName}}</view>
+          <view class="muted">下一辆：{{nextBusName}}</view>
         </view>
-        <text class="badge">2 分钟</text>
+        <text class="badge">{{nextBusEta}}</text>
       </view>
     </view>
 
     <view class="card">
       <view class="section-title">未来班次</view>
-      <view class="list-item row"><text>校巴2号</text><text class="muted">5 分钟</text></view>
-      <view class="list-item row"><text>校巴3号</text><text class="muted">8 分钟</text></view>
-      <view class="list-item row"><text>校巴1号（下一圈）</text><text class="muted">15 分钟</text></view>
+      <block wx:if="{{upcomingBuses.length}}">
+        <block wx:for="{{upcomingBuses}}" wx:key="id">
+          <view class="list-item row"><text>{{item.name}}</text><text class="muted">{{item.eta}}</text></view>
+        </block>
+      </block>
+      <view wx:else class="muted">暂无更多班次信息</view>
     </view>
   </scroll-view>
 </view>

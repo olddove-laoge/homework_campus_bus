@@ -1,4 +1,32 @@
 /* student home */
+.home-hero-row {
+  align-items: flex-start;
+  gap: 20rpx;
+}
+
+.home-hero-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.home-hero-station {
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.home-hero-next {
+  margin-top: 8rpx;
+}
+
+.home-hero-actions {
+  width: 220rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  flex-shrink: 0;
+}
+
 .bus-map {
   width: 100%;
   height: 360rpx;

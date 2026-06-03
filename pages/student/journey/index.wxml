@@ -66,10 +66,8 @@
     </view>
 
     <view class="tabs" style="grid-template-columns: repeat(2, 1fr);">
-      <view class="tab-item" bindtap="startRide"><view class="tab-title">推进一站</view><view class="muted">模拟车辆到站</view></view>
+      <view class="tab-item" bindtap="endRide"><view class="tab-title">退出行程</view><view class="muted">结束当前行程绑定</view></view>
       <view class="tab-item" bindtap="backHome"><view class="tab-title">返回首页</view><view class="muted">返回学生端首页</view></view>
     </view>
-
-    <button wx:if="{{finished}}" class="primary-btn" style="width: 100%; margin-top: 18rpx;" bindtap="endRide">结束并返回首页</button>
   </scroll-view>
 </view>

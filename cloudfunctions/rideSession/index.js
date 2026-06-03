@@ -98,25 +98,39 @@ async function issueBoardingCode(event) {
 async function bindRideToBus(event) {
   const codeText = event.codeText
   const driverBus = event.driverBus
-  if (!codeText) return { success: false, message: '乘车码无效' }
+  const reject = async (rideId, message) => {
+    if (rideId) {
+      await db.collection(COLLECTION_RIDES).doc(rideId).update({
+        data: {
+          lastError: message,
+          updatedAt: Date.now()
+        }
+      })
+      const latestRide = await getRideById(rideId)
+      return { success: false, message, state: { ...latestRide, rideId: latestRide._id } }
+    }
+    return { success: false, message }
+  }
+
+  if (!codeText) return reject('', '乘车码无效')
 
   const codeRes = await db.collection(COLLECTION_CODES).where({ token: codeText }).orderBy('issuedAt', 'desc').limit(1).get()
   const payload = codeRes.data && codeRes.data[0]
-  if (!payload) return { success: false, message: '乘车码无效' }
-  if (payload.status !== 'unused') return { success: false, message: '乘车码已使用' }
-  if (payload.expireAt < Date.now()) return { success: false, message: '乘车码已过期' }
+  if (!payload) return reject('', '乘车码无效')
+  if (payload.status !== 'unused') return reject(payload.rideId, '乘车码已使用')
+  if (payload.expireAt < Date.now()) return reject(payload.rideId, '乘车码已过期')
 
   const ride = await getRideById(payload.rideId)
-  if (!ride || ride.finished) return { success: false, message: '当前没有待乘车行程' }
-  if (ride.status !== 'pending_boarding') return { success: false, message: '当前行程不处于待上车状态' }
-  if (payload.segmentIndex !== ride.currentSegmentIndex) return { success: false, message: '乘车码与当前行程段不匹配' }
+  if (!ride || ride.finished) return reject(payload.rideId, '当前没有待乘车行程')
+  if (ride.status !== 'pending_boarding') return reject(ride._id, '当前行程不处于待上车状态')
+  if (payload.segmentIndex !== ride.currentSegmentIndex) return reject(ride._id, '乘车码与当前行程段不匹配')
 
   const segment = (ride.plan?.segments || [])[ride.currentSegmentIndex]
-  if (!segment) return { success: false, message: '当前行程段不存在' }
-  if (payload.lineId !== segment.lineId) return { success: false, message: '乘车码线路校验失败' }
-  if (!driverBus || driverBus.lineId !== segment.lineId) return { success: false, message: '该乘车码不属于当前车辆线路' }
+  if (!segment) return reject(ride._id, '当前行程段不存在')
+  if (payload.lineId !== segment.lineId) return reject(ride._id, '乘车码线路校验失败')
+  if (!driverBus || driverBus.lineId !== segment.lineId) return reject(ride._id, '该乘车码不属于当前车辆线路')
   if (segment.direction && driverBus.direction && segment.direction !== driverBus.direction) {
-    return { success: false, message: '当前车辆行驶方向不匹配' }
+    return reject(ride._id, '当前车辆行驶方向不匹配')
   }
 
   const segmentBindings = (ride.segmentBindings || []).map(binding => {
@@ -143,6 +157,7 @@ async function bindRideToBus(event) {
       currentBusName: driverBus.busName,
       boardCode: _.set(payload),
       segmentBindings: _.set(segmentBindings),
+      lastError: _.remove(),
       updatedAt: now
     }
   })
