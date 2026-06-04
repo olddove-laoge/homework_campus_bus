@@ -39,12 +39,12 @@
             <view style="font-size: 28rpx; font-weight: 600;">{{item.name}}</view>
             <text class="badge">{{item.eta}}</text>
           </view>
-          <view class="muted" style="margin-bottom: 12rpx;">当前位置：{{item.station}} · 温度 {{item.temp}}°C · 座位 {{item.seats}}</view>
+          <view class="muted" style="margin-bottom: 12rpx;">当前位置：{{item.station}} · 温度 {{item.temp}}°C · 座位 {{seatSummaryMap[item.id].seatsText || '--'}}</view>
           <view class="row">
             <view class="progress">
-              <view class="progress-inner" style="width: {{item.load}}%;"></view>
+              <view class="progress-inner" style="width: {{seatSummaryMap[item.id].load || 0}}%;"></view>
             </view>
-            <view class="muted">占用 {{item.load}}%</view>
+            <view class="muted">占用 {{seatSummaryMap[item.id].load || 0}}%</view>
           </view>
         </view>
       </block>

@@ -1,10 +1,12 @@
 const { getLiveSimulationState, tickLiveSimulation, buildMarkersForState } = require('../../../utils/mock/bus-simulator')
 const { getStations } = require('../../../utils/services/transit-data')
+const { getBusSeats } = require('../../../utils/services/ride-cloud')
 const { DEFAULT_STATION, normalizeStationName, mapStationDocs, getNearestStationName } = require('../../../utils/services/station-helper')
 const { countStopsToStation } = require('../../../utils/services/route-helper')
 
 const STATION_LABEL_SCALE = 16
 let timer = null
+let seatTimer = null
 
 function getNextBusForStation(stationName, buses) {
   const normalizedTarget = normalizeStationName(stationName)
@@ -19,6 +21,23 @@ function getNextBusForStation(stationName, buses) {
   return candidates[0] || null
 }
 
+function buildSeatSummary(seatMap) {
+  const seats = (seatMap && seatMap.seats) || []
+  if (!seats.length) {
+    return {
+      seatsText: '--',
+      load: 0
+    }
+  }
+
+  const occupiedCount = seats.filter(seat => seat.status === 'occupied' || seat.status === 'mine').length
+  const total = seats.length
+  return {
+    seatsText: `${occupiedCount}/${total}`,
+    load: Math.round((occupiedCount / total) * 100)
+  }
+}
+
 Page({
   data: {
     lines: {},
@@ -31,7 +50,8 @@ Page({
     currentStationName: DEFAULT_STATION,
     nextBusName: '--',
     nextBusEta: '--',
-    stationDocs: []
+    stationDocs: [],
+    seatSummaryMap: {}
   },
 
   onLoad() {
@@ -50,14 +70,17 @@ Page({
 
   onShow() {
     this.startSimulation()
+    this.startSeatPolling()
   },
 
   onHide() {
     this.stopSimulation()
+    this.stopSeatPolling()
   },
 
   onUnload() {
     this.stopSimulation()
+    this.stopSeatPolling()
   },
 
   resetViewState() {
@@ -68,17 +91,44 @@ Page({
       : rideState.status === 'pending_boarding'
         ? '待上车'
         : '乘车中'
-    const nextBus = getNextBusForStation(this.data.currentStationName || DEFAULT_STATION, initial.buses)
 
-    this.setData({
-      lines: initial.lines,
-      buses: initial.buses,
-      markers: initial.markers,
-      polyline: initial.polyline,
-      center: initial.center,
+    this.applyBusState(initial, rideStatus, true)
+    this.refreshSeatSummary()
+  },
+
+  applyBusState(state, rideStatus = this.data.rideStatus, resetMap = false) {
+    const nextBus = getNextBusForStation(this.data.currentStationName || DEFAULT_STATION, state.buses || [])
+    const nextData = {
+      buses: state.buses || [],
+      markers: state.markers,
       rideStatus,
       nextBusName: nextBus?.name || '--',
       nextBusEta: nextBus?.eta || '--'
+    }
+
+    if (resetMap) {
+      nextData.lines = state.lines
+      nextData.polyline = state.polyline
+      nextData.center = state.center
+    }
+
+    this.setData(nextData)
+  },
+
+  refreshSeatSummary() {
+    const baseBuses = this.data.buses || []
+    if (!baseBuses.length) return
+
+    Promise.all(baseBuses.map(bus =>
+      getBusSeats(bus.id)
+        .then(result => ({ busId: bus.id, summary: result.success ? buildSeatSummary(result.seatMap) : { seatsText: '--', load: 0 } }))
+        .catch(() => ({ busId: bus.id, summary: { seatsText: '--', load: 0 } }))
+    )).then(items => {
+      const seatSummaryMap = items.reduce((acc, item) => {
+        acc[item.busId] = item.summary
+        return acc
+      }, {})
+      this.setData({ seatSummaryMap })
     })
   },
 
@@ -110,17 +160,27 @@ Page({
     if (timer) return
     timer = setInterval(() => {
       const next = tickLiveSimulation(this.data.showStationLabel)
-      this.setData({
-        buses: next.buses,
-        markers: next.markers
-      })
+      this.applyBusState(next)
     }, 100)
+  },
+
+  startSeatPolling() {
+    if (seatTimer) return
+    seatTimer = setInterval(() => {
+      this.refreshSeatSummary()
+    }, 3000)
   },
 
   stopSimulation() {
     if (!timer) return
     clearInterval(timer)
     timer = null
+  },
+
+  stopSeatPolling() {
+    if (!seatTimer) return
+    clearInterval(seatTimer)
+    seatTimer = null
   },
 
   onMapRegionChange(e) {
