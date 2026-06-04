@@ -35,10 +35,24 @@ function routeDistance(nodes, startIndex, endIndex) {
   return total
 }
 
-function buildSegmentDirection(stations = []) {
+function buildSegmentDirection(lineId, stations = []) {
   if (!stations.length) return 'forward'
-  const backward = stations.some(name => /\((返程|终点)\)$/.test(name))
-  return backward ? 'backward' : 'forward'
+
+  const routeMap = getRouteSource()
+  const line = routeMap[lineId]
+  if (!line) return 'forward'
+
+  const stationNodes = buildLineNodes(line).filter(node => node.isStation !== false)
+  const first = normalizeStationName(stations[0])
+  const last = normalizeStationName(stations[stations.length - 1])
+  const startIndex = stationNodes.findIndex(node => normalizeStationName(node.name) === first)
+  const endIndex = stationNodes.findIndex(node => normalizeStationName(node.name) === last)
+
+  if (startIndex === -1 || endIndex === -1 || startIndex === endIndex) {
+    return 'forward'
+  }
+
+  return endIndex > startIndex ? 'forward' : 'backward'
 }
 
 function getStationMap() {
@@ -183,12 +197,12 @@ function dijkstra(start, end) {
         lineName: edge.lineName,
         stations: [edge.from, edge.to],
         distance: edge.distance,
-        direction: buildSegmentDirection([edge.from, edge.to])
+        direction: buildSegmentDirection(edge.lineId, [edge.from, edge.to])
       })
     } else {
       last.stations.push(edge.to)
       last.distance += edge.distance
-      last.direction = buildSegmentDirection(last.stations)
+      last.direction = buildSegmentDirection(last.lineId, last.stations)
     }
   })
 

@@ -92,11 +92,22 @@ Page({
   syncLiveBusStatus() {
     const bus = findBusById(this.data.busId)
     if (!bus) return
-    this.setData({
-      temperature: `${bus.temp}°C`,
-      loadText: bus.seats,
-      currentStation: bus.station || '--',
-      nextStation: getNextStationName(bus)
+
+    getBusById(this.data.busId).then(cloudBus => {
+      const temperature = typeof cloudBus?.temperature === 'number' ? `${cloudBus.temperature}°C` : '--'
+      this.setData({
+        temperature,
+        loadText: bus.seats || '--',
+        currentStation: bus.station || '--',
+        nextStation: getNextStationName(bus)
+      })
+    }).catch(() => {
+      this.setData({
+        temperature: '--',
+        loadText: bus.seats || '--',
+        currentStation: bus.station || '--',
+        nextStation: getNextStationName(bus)
+      })
     })
   },
 

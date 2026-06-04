@@ -9,7 +9,7 @@
 }
 
 .route-scroll {
-  height: 640rpx;
+  height: 500rpx;
 }
 
 .route-track {

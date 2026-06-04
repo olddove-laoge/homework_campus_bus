@@ -129,14 +129,14 @@ const lines = {
 }
 
 const buses = [
-  { id: 'S1', name: '校巴1号', lineId: 'line1', direction: 'forward', seats: '26/40', load: 65, temp: 24, offset: 0, speed: 0.12 },
-  { id: 'S2', name: '校巴2号', lineId: 'line1', direction: 'backward', seats: '18/40', load: 45, temp: 23, offset: 78, speed: 0.11 },
-  { id: 'S3', name: '校巴3号', lineId: 'line2', direction: 'forward', seats: '14/40', load: 35, temp: 23, offset: 24, speed: 0.1 },
-  { id: 'S4', name: '校巴4号', lineId: 'line2', direction: 'backward', seats: '22/40', load: 55, temp: 24, offset: 126, speed: 0.09 },
-  { id: 'S5', name: '校巴5号', lineId: 'line3', direction: 'forward', seats: '20/40', load: 50, temp: 24, offset: 48, speed: 0.1 },
-  { id: 'S6', name: '校巴6号', lineId: 'line3', direction: 'backward', seats: '12/40', load: 30, temp: 22, offset: 196, speed: 0.11 },
-  { id: 'S7', name: '校巴7号', lineId: 'line4', direction: 'forward', seats: '31/40', load: 78, temp: 25, offset: 132, speed: 0.14 },
-  { id: 'S8', name: '校巴8号', lineId: 'line4', direction: 'backward', seats: '16/40', load: 40, temp: 23, offset: 228, speed: 0.12 }
+  { id: 'S1', name: '校巴1号', lineId: 'line1', direction: 'forward', temp: 24, offset: 0, speed: 0.12 },
+  { id: 'S2', name: '校巴2号', lineId: 'line1', direction: 'backward', temp: 23, offset: 78, speed: 0.11 },
+  { id: 'S3', name: '校巴3号', lineId: 'line2', direction: 'forward', temp: 23, offset: 24, speed: 0.1 },
+  { id: 'S4', name: '校巴4号', lineId: 'line2', direction: 'backward', temp: 24, offset: 126, speed: 0.09 },
+  { id: 'S5', name: '校巴5号', lineId: 'line3', direction: 'forward', temp: 24, offset: 48, speed: 0.1 },
+  { id: 'S6', name: '校巴6号', lineId: 'line3', direction: 'backward', temp: 22, offset: 196, speed: 0.11 },
+  { id: 'S7', name: '校巴7号', lineId: 'line4', direction: 'forward', temp: 25, offset: 132, speed: 0.14 },
+  { id: 'S8', name: '校巴8号', lineId: 'line4', direction: 'backward', temp: 23, offset: 228, speed: 0.12 }
 ]
 
 const segmentCount = 12
@@ -181,17 +181,26 @@ function isAtNodeAnchor(pointIndex) {
   return Math.abs(pointIndex % segmentCount) < 0.0001
 }
 
-function getReachedStationNodeIndex(prevIndex, nextIndex, routeNodes, totalPoints) {
+function getReachedStationNodeIndex(prevIndex, nextIndex, routeNodes, totalPoints, direction = 'forward') {
   const normalizedPrev = normalizePointIndex(prevIndex, totalPoints)
   const normalizedNext = normalizePointIndex(nextIndex, totalPoints)
-  const wrapped = normalizedNext < normalizedPrev
 
   for (let nodeIndex = 0; nodeIndex < routeNodes.length; nodeIndex += 1) {
     if (!routeNodes[nodeIndex].isStation) continue
     const anchor = nodeIndex * segmentCount
-    const crossed = wrapped
-      ? anchor > normalizedPrev || anchor <= normalizedNext
-      : anchor > normalizedPrev && anchor <= normalizedNext
+    let crossed = false
+
+    if (direction === 'backward') {
+      const wrapped = normalizedNext > normalizedPrev
+      crossed = wrapped
+        ? anchor < normalizedPrev || anchor >= normalizedNext
+        : anchor < normalizedPrev && anchor >= normalizedNext
+    } else {
+      const wrapped = normalizedNext < normalizedPrev
+      crossed = wrapped
+        ? anchor > normalizedPrev || anchor <= normalizedNext
+        : anchor > normalizedPrev && anchor <= normalizedNext
+    }
 
     if (crossed) {
       return { nodeIndex, anchor }
@@ -201,11 +210,13 @@ function getReachedStationNodeIndex(prevIndex, nextIndex, routeNodes, totalPoint
   return null
 }
 
-function getNextStationNodeIndex(routeNodes, pointIndex) {
+function getNextStationNodeIndex(routeNodes, pointIndex, direction = 'forward') {
   const currentNodeIndex = getNodeIndex(pointIndex) % routeNodes.length
   const startOffset = isAtNodeAnchor(pointIndex) ? 0 : 1
   for (let offset = startOffset; offset < routeNodes.length + startOffset; offset += 1) {
-    const nodeIndex = (currentNodeIndex + offset) % routeNodes.length
+    const nodeIndex = direction === 'backward'
+      ? (currentNodeIndex - offset + routeNodes.length) % routeNodes.length
+      : (currentNodeIndex + offset) % routeNodes.length
     const node = routeNodes[nodeIndex]
     if (node.isStation) {
       return nodeIndex
@@ -219,21 +230,30 @@ function formatEta(seconds) {
   return `${mins} 分钟`
 }
 
-function estimateEtaMinutes(routeNodes, routePoints, pointIndex, speed, dwellLeftTicks = 0) {
+function estimateEtaMinutes(routeNodes, routePoints, pointIndex, speed, dwellLeftTicks = 0, direction = 'forward') {
   const currentNodeIndex = getNodeIndex(pointIndex) % routeNodes.length
   const atNodeAnchor = isAtNodeAnchor(pointIndex)
   let nextStationNodeIndex = currentNodeIndex
 
   if (!(atNodeAnchor && routeNodes[currentNodeIndex] && routeNodes[currentNodeIndex].isStation)) {
-    nextStationNodeIndex = getNextStationNodeIndex(routeNodes, pointIndex)
+    nextStationNodeIndex = getNextStationNodeIndex(routeNodes, pointIndex, direction)
   }
 
   const targetPointIndex = nextStationNodeIndex * segmentCount
   const total = routePoints.length
   const normalizedPointIndex = normalizePointIndex(pointIndex, total)
-  const diff = targetPointIndex >= normalizedPointIndex
-    ? targetPointIndex - normalizedPointIndex
-    : total - normalizedPointIndex + targetPointIndex
+  let diff = 0
+
+  if (direction === 'backward') {
+    diff = targetPointIndex <= normalizedPointIndex
+      ? normalizedPointIndex - targetPointIndex
+      : normalizedPointIndex + total - targetPointIndex
+  } else {
+    diff = targetPointIndex >= normalizedPointIndex
+      ? targetPointIndex - normalizedPointIndex
+      : total - normalizedPointIndex + targetPointIndex
+  }
+
   const pointsPerSecond = speed * (1000 / tickMs)
   const travelSeconds = pointsPerSecond > 0 ? diff / pointsPerSecond : 0
   const dwellSeconds = Math.max(0, dwellLeftTicks) * tickMs / 1000
@@ -322,13 +342,13 @@ function createLineState(lineId) {
       const currentNodeIndex = getNodeIndex(index) % routeNodes.length
       const atStation = isAtNodeAnchor(index) && Boolean(routeNodes[currentNodeIndex] && routeNodes[currentNodeIndex].isStation)
       const dwellLeftTicks = atStation ? dwellTicks : 0
-      const stationNodeIndex = atStation ? currentNodeIndex : getNextStationNodeIndex(routeNodes, index)
+      const stationNodeIndex = atStation ? currentNodeIndex : getNextStationNodeIndex(routeNodes, index, bus.direction)
       return {
         ...bus,
         index,
         dwellLeftTicks,
         station: routeNodes[stationNodeIndex].name,
-        eta: estimateEtaMinutes(routeNodes, routePoints, index, bus.speed, dwellLeftTicks)
+        eta: estimateEtaMinutes(routeNodes, routePoints, index, bus.speed, dwellLeftTicks, bus.direction)
       }
     })
 
@@ -393,24 +413,25 @@ function nextState(prevBuses, prevLines, showStationLabel = false) {
         ...bus,
         dwellLeftTicks,
         station: line.routeNodes[currentNodeIndex].name,
-        eta: estimateEtaMinutes(line.routeNodes, line.routePoints, bus.index, bus.speed, dwellLeftTicks)
+        eta: estimateEtaMinutes(line.routeNodes, line.routePoints, bus.index, bus.speed, dwellLeftTicks, bus.direction)
       }
     }
 
-    const nextIndex = normalizePointIndex(bus.index + bus.speed, line.routePoints.length)
-    const reachedStation = getReachedStationNodeIndex(bus.index, nextIndex, line.routeNodes, line.routePoints.length)
+    const delta = bus.direction === 'backward' ? -bus.speed : bus.speed
+    const nextIndex = normalizePointIndex(bus.index + delta, line.routePoints.length)
+    const reachedStation = getReachedStationNodeIndex(bus.index, nextIndex, line.routeNodes, line.routePoints.length, bus.direction)
     const actualIndex = reachedStation ? reachedStation.anchor : nextIndex
     const nextNodeIndex = getNodeIndex(actualIndex) % line.routeNodes.length
     const nextAtStation = Boolean(reachedStation) || (isAtNodeAnchor(actualIndex) && Boolean(line.routeNodes[nextNodeIndex] && line.routeNodes[nextNodeIndex].isStation))
     const dwellLeftTicks = nextAtStation ? dwellTicks : 0
-    const stationNodeIndex = nextAtStation ? nextNodeIndex : getNextStationNodeIndex(line.routeNodes, actualIndex)
+    const stationNodeIndex = nextAtStation ? nextNodeIndex : getNextStationNodeIndex(line.routeNodes, actualIndex, bus.direction)
 
     return {
       ...bus,
       index: actualIndex,
       dwellLeftTicks,
       station: line.routeNodes[stationNodeIndex].name,
-      eta: estimateEtaMinutes(line.routeNodes, line.routePoints, actualIndex, bus.speed, dwellLeftTicks)
+      eta: estimateEtaMinutes(line.routeNodes, line.routePoints, actualIndex, bus.speed, dwellLeftTicks, bus.direction)
     }
   })
 

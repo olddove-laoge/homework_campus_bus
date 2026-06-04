@@ -33,6 +33,25 @@ function getBuses() {
   }).catch(() => getCollection('buses').get().then(res => saveBusesCache(res.data || [])))
 }
 
+function updateBusTemperature(busId, temperature) {
+  return wx.cloud.callFunction({
+    name: 'readMasterData',
+    data: {
+      action: 'updateBusTemperature',
+      busId,
+      temperature
+    }
+  }).then(res => {
+    const result = res.result || {}
+    if (result.success && result.data) {
+      const next = getBusesCache().filter(item => item._id !== busId)
+      next.push(result.data)
+      saveBusesCache(next)
+    }
+    return result
+  })
+}
+
 function getBusById(busId) {
   const cached = getBusesCache().find(item => item._id === busId)
   if (cached) {
@@ -45,6 +64,7 @@ module.exports = {
   getUsersByUsername,
   getBuses,
   getBusById,
+  updateBusTemperature,
   getBusesCache,
   saveBusesCache
 }

@@ -29,6 +29,21 @@ exports.main = async (event) => {
       return { success: true, data: await getAllDocs('routes') }
     case 'getBuses':
       return { success: true, data: await getAllDocs('buses') }
+    case 'updateBusTemperature': {
+      const busId = event && event.busId
+      const temperature = event && event.temperature
+      if (!busId || typeof temperature !== 'number') {
+        return { success: false, message: '参数错误' }
+      }
+      await db.collection('buses').doc(busId).update({
+        data: {
+          temperature,
+          updatedAt: Date.now()
+        }
+      })
+      const res = await db.collection('buses').doc(busId).get()
+      return { success: true, data: res.data || null }
+    }
     default:
       return { success: false, message: '未知操作' }
   }

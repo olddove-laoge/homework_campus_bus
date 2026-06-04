@@ -5,10 +5,15 @@
       <view class="section-title">{{busName}} 座位图</view>
       <view class="muted" style="margin-bottom: 14rpx;">绿色可选，红色已占，蓝色为我</view>
       <view class="seat-grid">
-        <view class="seat free">1A</view><view class="seat occupied">1B</view><view class="seat free">1C</view><view class="seat occupied">1D</view>
-        <view class="seat free">2A</view><view class="seat mine">2B</view><view class="seat occupied">2C</view><view class="seat free">2D</view>
-        <view class="seat occupied">3A</view><view class="seat free">3B</view><view class="seat free">3C</view><view class="seat occupied">3D</view>
-        <view class="seat free">4A</view><view class="seat occupied">4B</view><view class="seat free">4C</view><view class="seat free">4D</view>
+        <view
+          wx:for="{{seats}}"
+          wx:key="seatNo"
+          class="seat {{item.status === 'mine' ? 'mine' : item.status === 'occupied' ? 'occupied' : 'free'}}"
+          bindtap="chooseSeat"
+          data-seat="{{item.seatNo}}"
+        >
+          {{item.seatNo}}
+        </view>
       </view>
     </view>
   </scroll-view>

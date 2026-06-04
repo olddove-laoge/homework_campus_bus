@@ -31,6 +31,7 @@
       <view class="list-item row"><text>当前车辆</text><text class="muted">{{currentBusName}}</text></view>
       <view class="list-item row"><text>下一站</text><text class="muted">{{timelineStops[activeIndex + 1].name || currentSegmentEnd}}</text></view>
       <view class="list-item row"><text>到站动作</text><text class="muted">到达本段终点后自动下车</text></view>
+      <button class="primary-btn" style="width: 100%; margin-top: 18rpx;" bindtap="goSeat">选择座位</button>
     </view>
 
     <view class="card" wx:if="{{rideStatusKey === 'finished'}}">

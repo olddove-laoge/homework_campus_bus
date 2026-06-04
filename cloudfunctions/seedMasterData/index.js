@@ -17,14 +17,14 @@ const USERS = [
 ]
 
 const BUSES = [
-  { _id: 'S1', busName: '校巴1号', lineId: 'line1', lineName: '一号线', direction: 'forward', capacity: 40, defaultSpeed: 0.12, status: 'active' },
-  { _id: 'S2', busName: '校巴2号', lineId: 'line1', lineName: '一号线', direction: 'backward', capacity: 40, defaultSpeed: 0.11, status: 'active' },
-  { _id: 'S3', busName: '校巴3号', lineId: 'line2', lineName: '二号线', direction: 'forward', capacity: 40, defaultSpeed: 0.10, status: 'active' },
-  { _id: 'S4', busName: '校巴4号', lineId: 'line2', lineName: '二号线', direction: 'backward', capacity: 40, defaultSpeed: 0.09, status: 'active' },
-  { _id: 'S5', busName: '校巴5号', lineId: 'line3', lineName: '三号线', direction: 'forward', capacity: 40, defaultSpeed: 0.10, status: 'active' },
-  { _id: 'S6', busName: '校巴6号', lineId: 'line3', lineName: '三号线', direction: 'backward', capacity: 40, defaultSpeed: 0.11, status: 'active' },
-  { _id: 'S7', busName: '校巴7号', lineId: 'line4', lineName: '四号线', direction: 'forward', capacity: 40, defaultSpeed: 0.14, status: 'active' },
-  { _id: 'S8', busName: '校巴8号', lineId: 'line4', lineName: '四号线', direction: 'backward', capacity: 40, defaultSpeed: 0.12, status: 'active' }
+  { _id: 'S1', busName: '校巴1号', lineId: 'line1', lineName: '一号线', direction: 'forward', capacity: 40, defaultSpeed: 0.12, temperature: 24, status: 'active' },
+  { _id: 'S2', busName: '校巴2号', lineId: 'line1', lineName: '一号线', direction: 'backward', capacity: 40, defaultSpeed: 0.11, temperature: 23, status: 'active' },
+  { _id: 'S3', busName: '校巴3号', lineId: 'line2', lineName: '二号线', direction: 'forward', capacity: 40, defaultSpeed: 0.10, temperature: 23, status: 'active' },
+  { _id: 'S4', busName: '校巴4号', lineId: 'line2', lineName: '二号线', direction: 'backward', capacity: 40, defaultSpeed: 0.09, temperature: 24, status: 'active' },
+  { _id: 'S5', busName: '校巴5号', lineId: 'line3', lineName: '三号线', direction: 'forward', capacity: 40, defaultSpeed: 0.10, temperature: 24, status: 'active' },
+  { _id: 'S6', busName: '校巴6号', lineId: 'line3', lineName: '三号线', direction: 'backward', capacity: 40, defaultSpeed: 0.11, temperature: 22, status: 'active' },
+  { _id: 'S7', busName: '校巴7号', lineId: 'line4', lineName: '四号线', direction: 'forward', capacity: 40, defaultSpeed: 0.14, temperature: 25, status: 'active' },
+  { _id: 'S8', busName: '校巴8号', lineId: 'line4', lineName: '四号线', direction: 'backward', capacity: 40, defaultSpeed: 0.12, temperature: 23, status: 'active' }
 ]
 
 const ROUTES = [
@@ -33,6 +33,34 @@ const ROUTES = [
   { _id: 'line3', lineName: '三号线', color: '#22C55ECC', stations: ['国威路(地铁)站', '(北区)二号门站', '天虹站', '农贸市场站', '江大南路南站', '江西水利电力大学站', '彭家桥(地铁)站', '普瑞眼科站', '梦时代站', '谢家村(地铁)站', '工商银行站', '520Park站', '699文化创意园站', '南昌市十七中站', '北京银行站', '玉河站', '彭桥路站', '少春中学站', '培英学院站', '金域名都站', '体育公园站', '湖滨公园站', '国威路(地铁)站(返程)'], status: 'active' },
   { _id: 'line4', lineName: '四号线', color: '#A855F7CC', stations: ['国威路(地铁)站', '火炬广场(地铁)站', '农业银行站', '休闲公园站', '梁万(地铁)站', '泰豪科技园站', '人民政府站', '艺术中心站', '南洋花园站', '万象汇站', '高新大道(地铁)站', '肿瘤医院站', '南昌师范学院站', '江西管理职业学院站', '特殊教育学校站', '公安局站', '天御国际站', '(北区)二号门站', '国威路(地铁)站(返程)'], status: 'active' }
 ]
+
+function buildDefaultSeats(busId) {
+  const presetOccupied = {
+    S1: ['1B', '2C', '3D', '4B'],
+    S2: ['1A', '2D', '3B'],
+    S3: ['1C', '2B', '4D'],
+    S4: ['1D', '2A', '3C', '4A'],
+    S5: ['2A', '2D', '3A'],
+    S6: ['1B', '3D', '4C'],
+    S7: ['1A', '2B', '3C', '4D'],
+    S8: ['1D', '2C', '3B']
+  }
+
+  const occupiedSet = new Set(presetOccupied[busId] || [])
+  const seats = []
+  const rows = ['1', '2', '3', '4']
+  const cols = ['A', 'B', 'C', 'D']
+  rows.forEach(row => cols.forEach(col => {
+    const seatNo = `${row}${col}`
+    seats.push({
+      seatNo,
+      status: occupiedSet.has(seatNo) ? 'occupied' : 'free',
+      occupantRideId: '',
+      occupantUserId: ''
+    })
+  }))
+  return seats
+}
 
 const STATIONS = [
   { _id: 'station-guowei', stationName: '国威路(地铁)站', latitude: 28.687174, longitude: 115.941528, aliases: ['国威路(地铁)站(返程)'], status: 'active' },
@@ -112,11 +140,18 @@ async function upsertDocs(collectionName, docs) {
   }
 }
 
+const RIDE_SEATS = BUSES.map(bus => ({
+  _id: `seatmap-${bus._id}`,
+  busId: bus._id,
+  seats: buildDefaultSeats(bus._id)
+}))
+
 const SEED_MAP = {
   users: USERS,
   buses: BUSES,
   routes: ROUTES,
-  stations: STATIONS
+  stations: STATIONS,
+  ride_seats: RIDE_SEATS
 }
 
 exports.main = async (event) => {

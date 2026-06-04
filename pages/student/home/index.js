@@ -1,5 +1,6 @@
 const { getLiveSimulationState, tickLiveSimulation, buildMarkersForState } = require('../../../utils/mock/bus-simulator')
 const { getStations } = require('../../../utils/services/transit-data')
+const { getBuses } = require('../../../utils/services/master-data')
 const { getBusSeats } = require('../../../utils/services/ride-cloud')
 const { DEFAULT_STATION, normalizeStationName, mapStationDocs, getNearestStationName } = require('../../../utils/services/station-helper')
 const { countStopsToStation } = require('../../../utils/services/route-helper')
@@ -51,7 +52,8 @@ Page({
     nextBusName: '--',
     nextBusEta: '--',
     stationDocs: [],
-    seatSummaryMap: {}
+    seatSummaryMap: {},
+    temperatureMap: {}
   },
 
   onLoad() {
@@ -119,16 +121,23 @@ Page({
     const baseBuses = this.data.buses || []
     if (!baseBuses.length) return
 
-    Promise.all(baseBuses.map(bus =>
-      getBusSeats(bus.id)
-        .then(result => ({ busId: bus.id, summary: result.success ? buildSeatSummary(result.seatMap) : { seatsText: '--', load: 0 } }))
-        .catch(() => ({ busId: bus.id, summary: { seatsText: '--', load: 0 } }))
-    )).then(items => {
-      const seatSummaryMap = items.reduce((acc, item) => {
+    Promise.all([
+      Promise.all(baseBuses.map(bus =>
+        getBusSeats(bus.id)
+          .then(result => ({ busId: bus.id, summary: result.success ? buildSeatSummary(result.seatMap) : { seatsText: '--', load: 0 } }))
+          .catch(() => ({ busId: bus.id, summary: { seatsText: '--', load: 0 } }))
+      )),
+      getBuses().catch(() => [])
+    ]).then(([seatItems, cloudBuses]) => {
+      const seatSummaryMap = seatItems.reduce((acc, item) => {
         acc[item.busId] = item.summary
         return acc
       }, {})
-      this.setData({ seatSummaryMap })
+      const temperatureMap = (cloudBuses || []).reduce((acc, bus) => {
+        acc[bus._id] = typeof bus.temperature === 'number' ? bus.temperature : '--'
+        return acc
+      }, {})
+      this.setData({ seatSummaryMap, temperatureMap })
     })
   },
 

@@ -1,4 +1,4 @@
-const { getStations, saveStationsCache } = require('../../../utils/services/transit-data')
+const { getStations, getStationsCache, saveStationsCache } = require('../../../utils/services/transit-data')
 
 function distance(a, b) {
   const dx = (a.latitude - b.latitude) * 111000
@@ -30,8 +30,8 @@ Page({
 
   onLoad() {
     wx.removeStorageSync('rideDraft')
-    getStations().then(stations => {
-      saveStationsCache(stations)
+
+    const applyStations = stations => {
       const allStations = dedupeStations((stations || []).map(item => ({
         id: item._id,
         name: item.stationName,
@@ -44,7 +44,18 @@ Page({
         endCandidates: allStations
       })
       this.requestLocation()
+    }
+
+    const cachedStations = getStationsCache()
+    if (cachedStations.length) {
+      applyStations(cachedStations)
+    }
+
+    getStations().then(stations => {
+      saveStationsCache(stations)
+      applyStations(stations)
     }).catch(() => {
+      if (cachedStations.length) return
       wx.showToast({ title: '站点数据加载失败', icon: 'none' })
     })
   },

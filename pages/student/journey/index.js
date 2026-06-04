@@ -10,7 +10,8 @@ const {
   getRideState: fetchRideState,
   issueBoardingCode,
   completeSegment,
-  updateRideProgress
+  updateRideProgress,
+  cancelRide
 } = require('../../../utils/services/ride-cloud')
 
 const ROW_HEIGHT = 104
@@ -457,6 +458,10 @@ Page({
     wx.navigateTo({ url: '/pages/student/boarding-code/index' })
   },
 
+  goSeat() {
+    wx.navigateTo({ url: '/pages/student/seat/index' })
+  },
+
   startRide() {
     const rideState = getRideState()
     if (!rideState || rideState.finished) return
@@ -494,9 +499,28 @@ Page({
   },
 
   endRide() {
-    clearRideState()
-    wx.removeStorageSync('currentRidePlan')
-    wx.reLaunch({ url: '/pages/student/home/index' })
+    const rideState = getRideState()
+    const rideId = rideState && (rideState.rideId || rideState._id)
+
+    const finish = () => {
+      clearRideState()
+      wx.removeStorageSync('currentRidePlan')
+      wx.reLaunch({ url: '/pages/student/home/index' })
+    }
+
+    if (!rideId) {
+      finish()
+      return
+    }
+
+    cancelRide(rideId).then(result => {
+      if (result && result.state) {
+        wx.setStorageSync('currentRideState', result.state)
+      }
+      finish()
+    }).catch(() => {
+      finish()
+    })
   },
 
   backHome() {

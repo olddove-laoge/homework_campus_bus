@@ -41,11 +41,29 @@ function updateRideProgress(rideId, currentIndex) {
   })
 }
 
+function getBusSeats(busId) {
+  return callRideFunction('getBusSeats', { busId })
+}
+
+function selectSeat(rideId, seatNo) {
+  return callRideFunction('selectSeat', {
+    rideId,
+    seatNo
+  })
+}
+
+function cancelRide(rideId) {
+  return callRideFunction('cancelRide', { rideId })
+}
+
 module.exports = {
   createRideSession,
   getRideState,
   issueBoardingCode,
   bindRideToBus,
   completeSegment,
-  updateRideProgress
+  updateRideProgress,
+  getBusSeats,
+  selectSeat,
+  cancelRide
 }
