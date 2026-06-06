@@ -14,6 +14,7 @@
       <input class="input" password="true" placeholder="请输入密码" value="{{password}}" bindinput="onPasswordInput" />
 
       <button class="primary-btn login-btn" bindtap="handleLogin">登录</button>
+      <button class="primary-btn login-btn" bindtap="goRegister" style="background: linear-gradient(120deg, #10b981, #059669); margin-top: 16rpx;">学生注册</button>
 
       <view class="tips">
         <view class="tips-title">演示账号</view>

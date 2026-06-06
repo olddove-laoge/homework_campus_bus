@@ -1,0 +1,22 @@
+<navigation-bar title="学生注册" back="{{true}}" color="#111827" background="#f5f7fb"></navigation-bar>
+<view class="scroll-page">
+  <scroll-view class="scroll-area" scroll-y="true" type="list">
+    <view class="card login-hero">
+      <view class="section-title">创建学生账号</view>
+      <view class="muted">注册后可使用学生端完整功能</view>
+    </view>
+
+    <view class="card">
+      <view class="field-label">账号</view>
+      <input class="input" placeholder="请输入账号" value="{{username}}" bindinput="onUsernameInput" />
+
+      <view class="field-label" style="margin-top: 20rpx;">密码</view>
+      <input class="input" password="true" placeholder="请输入密码" value="{{password}}" bindinput="onPasswordInput" />
+
+      <view class="field-label" style="margin-top: 20rpx;">昵称（可选）</view>
+      <input class="input" placeholder="请输入昵称" value="{{displayName}}" bindinput="onDisplayNameInput" />
+
+      <button class="primary-btn login-btn" bindtap="handleRegister">注册</button>
+    </view>
+  </scroll-view>
+</view>

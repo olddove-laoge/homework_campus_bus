@@ -19,8 +19,8 @@ Page({
     this.setData({ password: e.detail.value.trim() })
   },
 
-  goJourney() {
-    wx.navigateTo({ url: '/pages/student/journey/index' })
+  goRegister() {
+    wx.navigateTo({ url: '/pages/register/index' })
   },
 
   handleLogin() {

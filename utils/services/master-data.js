@@ -52,6 +52,18 @@ function updateBusTemperature(busId, temperature) {
   })
 }
 
+function registerStudent(username, password, displayName) {
+  return wx.cloud.callFunction({
+    name: 'readMasterData',
+    data: {
+      action: 'registerStudent',
+      username,
+      password,
+      displayName
+    }
+  }).then(res => res.result || {})
+}
+
 function getBusById(busId) {
   const cached = getBusesCache().find(item => item._id === busId)
   if (cached) {
@@ -62,6 +74,7 @@ function getBusById(busId) {
 
 module.exports = {
   getUsersByUsername,
+  registerStudent,
   getBuses,
   getBusById,
   updateBusTemperature,
