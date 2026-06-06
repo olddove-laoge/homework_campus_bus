@@ -2,8 +2,7 @@ const { getUsersByUsername } = require('../../utils/services/master-data')
 
 const ROLE_HOME_MAP = {
   student: { home: '/pages/student/home/index', roleName: '学生端' },
-  driver: { home: '/pages/driver/dashboard/index', roleName: '司机端' },
-  admin: { home: '/pages/admin/dashboard/index', roleName: '管理端' }
+  driver: { home: '/pages/driver/dashboard/index', roleName: '司机端' }
 }
 
 Page({

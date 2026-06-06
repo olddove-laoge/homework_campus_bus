@@ -1,7 +1,9 @@
 const { getBusById } = require('../../../utils/services/master-data')
+const { getBusSeats } = require('../../../utils/services/ride-cloud')
 const { findBusById, tickLiveSimulation, lines } = require('../../../utils/mock/bus-simulator')
 
 let timer = null
+let seatTimer = null
 
 function buildLineNodes(line) {
   if (Array.isArray(line.routeNodes) && line.routeNodes.length) {
@@ -60,19 +62,23 @@ Page({
         directionText: bus.direction === 'backward' ? '返向' : '正向'
       })
       this.syncLiveBusStatus()
+      this.refreshSeatLoad()
     }).catch(() => {})
   },
 
   onShow() {
     this.startPolling()
+    this.startSeatPolling()
   },
 
   onHide() {
     this.stopPolling()
+    this.stopSeatPolling()
   },
 
   onUnload() {
     this.stopPolling()
+    this.stopSeatPolling()
   },
 
   startPolling() {
@@ -83,10 +89,36 @@ Page({
     }, 100)
   },
 
+  startSeatPolling() {
+    if (seatTimer) return
+    seatTimer = setInterval(() => {
+      this.refreshSeatLoad()
+    }, 3000)
+  },
+
   stopPolling() {
     if (!timer) return
     clearInterval(timer)
     timer = null
+  },
+
+  stopSeatPolling() {
+    if (!seatTimer) return
+    clearInterval(seatTimer)
+    seatTimer = null
+  },
+
+  refreshSeatLoad() {
+    if (!this.data.busId) return
+    getBusSeats(this.data.busId).then(result => {
+      if (!result.success || !result.seatMap) return
+      const seats = result.seatMap.seats || []
+      const occupied = seats.filter(seat => seat.status === 'occupied' || seat.status === 'mine').length
+      const total = seats.length || 0
+      this.setData({
+        loadText: total ? `${occupied}/${total}` : '--'
+      })
+    }).catch(() => {})
   },
 
   syncLiveBusStatus() {
@@ -97,14 +129,12 @@ Page({
       const temperature = typeof cloudBus?.temperature === 'number' ? `${cloudBus.temperature}°C` : '--'
       this.setData({
         temperature,
-        loadText: bus.seats || '--',
         currentStation: bus.station || '--',
         nextStation: getNextStationName(bus)
       })
     }).catch(() => {
       this.setData({
         temperature: '--',
-        loadText: bus.seats || '--',
         currentStation: bus.station || '--',
         nextStation: getNextStationName(bus)
       })
@@ -113,9 +143,6 @@ Page({
 
   goAc() {
     wx.navigateTo({ url: '/pages/driver/ac/index' })
-  },
-  goBroadcast() {
-    wx.navigateTo({ url: '/pages/driver/broadcast/index' })
   },
   goScan() {
     wx.navigateTo({ url: '/pages/driver/scan/index' })

@@ -16,10 +16,9 @@
       <button class="primary-btn login-btn" bindtap="handleLogin">登录</button>
 
       <view class="tips">
-        <view class="tips-title">演示账号（硬编码）</view>
+        <view class="tips-title">演示账号</view>
         <view class="muted">学生端: student / 123456</view>
-        <view class="muted">司机端: driver / 123456</view>
-        <view class="muted">管理端: admin / 123456</view>
+        <view class="muted">司机端: driver1~driver8 / 123456</view>
       </view>
     </view>
   </scroll-view>

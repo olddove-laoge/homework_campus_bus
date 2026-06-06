@@ -12,8 +12,7 @@ const USERS = [
   { _id: 'user-driver5', username: 'driver5', password: '123456', role: 'driver', displayName: '司机5', driverBusId: 'S5', driverBusName: '校巴5号', status: 'active' },
   { _id: 'user-driver6', username: 'driver6', password: '123456', role: 'driver', displayName: '司机6', driverBusId: 'S6', driverBusName: '校巴6号', status: 'active' },
   { _id: 'user-driver7', username: 'driver7', password: '123456', role: 'driver', displayName: '司机7', driverBusId: 'S7', driverBusName: '校巴7号', status: 'active' },
-  { _id: 'user-driver8', username: 'driver8', password: '123456', role: 'driver', displayName: '司机8', driverBusId: 'S8', driverBusName: '校巴8号', status: 'active' },
-  { _id: 'user-admin', username: 'admin', password: '123456', role: 'admin', displayName: '管理员', status: 'active' }
+  { _id: 'user-driver8', username: 'driver8', password: '123456', role: 'driver', displayName: '司机8', driverBusId: 'S8', driverBusName: '校巴8号', status: 'active' }
 ]
 
 const BUSES = [
