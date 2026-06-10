@@ -1,4 +1,21 @@
 const { getBusSeats, selectSeat } = require('../../../utils/services/ride-cloud')
+const { getRideState: getLocalRideState } = require('../../../utils/services/session-storage')
+
+function decorateSeats(seats = [], rideId) {
+  return (seats || []).map(seat => {
+    const occupiedByCurrentUser = seat.occupantRideId && seat.occupantRideId === rideId
+    const occupied = occupiedByCurrentUser || seat.status === 'occupied' || seat.status === 'mine' || Boolean(seat.occupantRideId)
+
+    return {
+      ...seat,
+      status: occupiedByCurrentUser
+        ? 'mine'
+        : occupied
+          ? 'occupied'
+          : 'free'
+    }
+  })
+}
 
 Page({
   data: {
@@ -10,7 +27,7 @@ Page({
   },
 
   onLoad() {
-    const state = wx.getStorageSync('currentRideState')
+    const state = getLocalRideState()
     if (!state || state.finished || state.status !== 'on_bus' || !state.currentBusId) {
       wx.showToast({ title: '仅乘车中可选座', icon: 'none' })
       setTimeout(() => {
@@ -35,7 +52,7 @@ Page({
         wx.showToast({ title: result.message || '座位加载失败', icon: 'none' })
         return
       }
-      this.setData({ seats: result.seatMap.seats || [] })
+      this.setData({ seats: decorateSeats(result.seatMap.seats || [], this.data.rideId) })
     })
   },
 
@@ -48,7 +65,7 @@ Page({
         wx.showToast({ title: result.message || '选座失败', icon: 'none' })
         return
       }
-      this.setData({ seats: result.seats || [] })
+      this.setData({ seats: decorateSeats(result.seats || [], this.data.rideId) })
       wx.showToast({ title: '选座成功', icon: 'none' })
     })
   }

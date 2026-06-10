@@ -1,6 +1,7 @@
 const { findShortestPath } = require('../../../utils/mock/route-planner')
 const { lines } = require('../../../utils/mock/bus-simulator')
 const { createRideSession } = require('../../../utils/services/ride-cloud')
+const { setRidePlan, setRideState } = require('../../../utils/services/session-storage')
 
 function addSegmentColors(segments = []) {
   return segments.map(segment => ({
@@ -56,7 +57,7 @@ Page({
     }
 
     this.setData({ plan })
-    wx.setStorageSync('currentRidePlan', plan)
+    setRidePlan(plan)
   },
 
   confirmPlan() {
@@ -65,8 +66,8 @@ Page({
         wx.showToast({ title: result.message || '创建行程失败', icon: 'none' })
         return
       }
-      wx.setStorageSync('currentRidePlan', this.data.plan)
-      wx.setStorageSync('currentRideState', {
+      setRidePlan(this.data.plan)
+      setRideState({
         ...result.state,
         plan: this.data.plan
       })

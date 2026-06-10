@@ -6,6 +6,7 @@ const {
   clearRideState,
   getCurrentSegment
 } = require('../../../utils/mock/ride-session-store')
+const { getRidePlan, setRidePlan, setRideState, removeRidePlan } = require('../../../utils/services/session-storage')
 const {
   getRideState: fetchRideState,
   issueBoardingCode,
@@ -177,7 +178,7 @@ function getCurrentSegmentEndIndex(timelineStops, segmentIndex) {
 }
 
 function buildViewModel(rideState) {
-  const cachedPlan = wx.getStorageSync('currentRidePlan') || {}
+  const cachedPlan = getRidePlan() || {}
   const ridePlan = rideState?.plan || {}
   const storedPlan = cachedPlan.startStation && cachedPlan.endStation
     ? {
@@ -279,7 +280,7 @@ Page({
 
   restoreRideState(syncCloud = false) {
     const localRideState = getRideState()
-    const cachedPlan = wx.getStorageSync('currentRidePlan') || {}
+    const cachedPlan = getRidePlan() || {}
     const hasPlan = (localRideState?.plan?.startStation && localRideState?.plan?.endStation)
       || (cachedPlan.startStation && cachedPlan.endStation)
 
@@ -312,7 +313,7 @@ Page({
         plan: normalizedPlan
       }
       if (normalizedPlan.startStation && normalizedPlan.endStation) {
-        wx.setStorageSync('currentRidePlan', normalizedPlan)
+        setRidePlan(normalizedPlan)
       }
       saveRideState(nextState)
 
@@ -504,7 +505,7 @@ Page({
 
     const finish = () => {
       clearRideState()
-      wx.removeStorageSync('currentRidePlan')
+      removeRidePlan()
       wx.reLaunch({ url: '/pages/student/home/index' })
     }
 
@@ -515,7 +516,7 @@ Page({
 
     cancelRide(rideId).then(result => {
       if (result && result.state) {
-        wx.setStorageSync('currentRideState', result.state)
+        setRideState(result.state)
       }
       finish()
     }).catch(() => {

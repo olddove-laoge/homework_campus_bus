@@ -6,6 +6,7 @@ try {
   genQrcode = null
 }
 const { issueBoardingCode, getRideState } = require('../../../utils/services/ride-cloud')
+const { getRideState: getLocalRideState, setRideState } = require('../../../utils/services/session-storage')
 
 Page({
   data: {
@@ -39,13 +40,13 @@ Page({
   startPollingState() {
     if (timer) return
     timer = setInterval(() => {
-      const rideState = wx.getStorageSync('currentRideState') || {}
+      const rideState = getLocalRideState() || {}
       const rideId = rideState.rideId || rideState._id || rideState.boardCode?.rideId || ''
       if (!rideId) return
 
       getRideState(rideId).then(result => {
         if (!result.success || !result.state) return
-        wx.setStorageSync('currentRideState', result.state)
+        setRideState(result.state)
         this.setData({
           qrError: result.state.lastError || ''
         })
@@ -103,7 +104,7 @@ Page({
   },
 
   refreshCode() {
-    const rideState = wx.getStorageSync('currentRideState') || {}
+    const rideState = getLocalRideState() || {}
     const rideId = rideState.rideId || rideState._id || rideState.boardCode?.rideId || ''
     if (!rideId) {
       this.setData({ qrError: '未找到当前行程标识，请先重新生成乘车方案。' })
@@ -120,7 +121,7 @@ Page({
 
       const payload = result.payload
       const codeText = result.codeText
-      wx.setStorageSync('currentRideState', result.state)
+      setRideState(result.state)
 
       this.setData({
         qrError: result.state?.lastError || '',

@@ -255,7 +255,7 @@ async function selectSeat(event) {
 
   seats[targetIndex] = {
     ...seats[targetIndex],
-    status: 'mine',
+    status: 'occupied',
     occupantRideId: ride._id,
     occupantUserId: ride.userId || ''
   }

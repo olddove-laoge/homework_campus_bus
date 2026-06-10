@@ -1,15 +1,20 @@
 const { getBusesCache } = require('../services/master-data')
+const {
+  getRideState,
+  setRideState,
+  removeRideState,
+  getRidePlan,
+  setRidePlan,
+  removeRidePlan,
+  getLatestBoardingCode,
+  setLatestBoardingCode,
+  removeLatestBoardingCode
+} = require('../services/session-storage')
 
-const RIDE_STATE_KEY = 'currentRideState'
-const LATEST_BOARDING_CODE_KEY = 'latestBoardingCode'
 const BOARDING_CODE_MAP_KEY = 'boardingCodePayloadMap'
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value))
-}
-
-function getRideState() {
-  return wx.getStorageSync(RIDE_STATE_KEY) || null
 }
 
 function getBoardingCodeMap() {
@@ -22,13 +27,13 @@ function saveBoardingCodeMap(map) {
 }
 
 function saveRideState(state) {
-  wx.setStorageSync(RIDE_STATE_KEY, state)
-  return state
+  return setRideState(state)
 }
 
 function clearRideState() {
-  wx.removeStorageSync(RIDE_STATE_KEY)
-  wx.removeStorageSync(LATEST_BOARDING_CODE_KEY)
+  removeRideState()
+  removeRidePlan()
+  removeLatestBoardingCode()
   wx.removeStorageSync(BOARDING_CODE_MAP_KEY)
 }
 

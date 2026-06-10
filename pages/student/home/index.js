@@ -1,4 +1,5 @@
 const { getLiveSimulationState, tickLiveSimulation, buildMarkersForState } = require('../../../utils/mock/bus-simulator')
+const { getRideState: getLocalRideState } = require('../../../utils/services/session-storage')
 const { getStations } = require('../../../utils/services/transit-data')
 const { getBuses } = require('../../../utils/services/master-data')
 const { getBusSeats } = require('../../../utils/services/ride-cloud')
@@ -71,6 +72,7 @@ Page({
   },
 
   onShow() {
+    this.resetViewState()
     this.startSimulation()
     this.startSeatPolling()
   },
@@ -87,7 +89,7 @@ Page({
 
   resetViewState() {
     const initial = getLiveSimulationState(this.data.showStationLabel)
-    const rideState = wx.getStorageSync('currentRideState')
+    const rideState = getLocalRideState()
     const rideStatus = !rideState || rideState.finished
       ? '未乘车'
       : rideState.status === 'pending_boarding'
@@ -219,7 +221,7 @@ Page({
   },
 
   goRide() {
-    const state = wx.getStorageSync('currentRideState')
+    const state = getLocalRideState()
     if (state && !state.finished) {
       wx.navigateTo({ url: '/pages/student/journey/index' })
       return
@@ -228,7 +230,7 @@ Page({
   },
 
   goSeat() {
-    const state = wx.getStorageSync('currentRideState')
+    const state = getLocalRideState()
     if (!state || state.finished || state.status !== 'on_bus') {
       wx.showToast({ title: '仅乘车中可选座', icon: 'none' })
       return

@@ -1,5 +1,6 @@
 const { bindRideToBus } = require('../../../utils/services/ride-cloud')
 const { getBusById } = require('../../../utils/services/master-data')
+const { setRideState } = require('../../../utils/services/session-storage')
 const { getDriverBuses } = require('../../../utils/mock/ride-session-store')
 
 Page({
@@ -45,14 +46,14 @@ Page({
         bindRideToBus(res.result || '', driverBus).then(result => {
           if (!result.success) {
             if (result.state) {
-              wx.setStorageSync('currentRideState', result.state)
+              setRideState(result.state)
             }
             this.setData({ resultText: result.message })
             wx.showToast({ title: result.message, icon: 'none' })
             return
           }
 
-          wx.setStorageSync('currentRideState', result.state)
+          setRideState(result.state)
           const text = `绑定成功：${driverBus.busName} 已接入当前行程`
           this.setData({ resultText: text })
           wx.showToast({ title: '扫码绑定成功', icon: 'none' })
